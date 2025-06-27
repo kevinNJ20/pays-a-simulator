@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Pays A (Côtier) - POC UEMOA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏗️ Système Douanier Pays A (Côtier)</h1>
+            <p>Simulation Pays de Prime Abord - POC Interconnexion UEMOA</p>
+            <div class="status" id="status">
+                <span class="status-indicator" id="status-indicator">🔴</span>
+                <span id="status-text">Vérification...</span>
+            </div>
+        </header>
+
+        <main class="main">
+            <section class="card">
+                <h2>📋 Créer un Manifeste</h2>
+                <form id="manifeste-form">
+                    <div class="form-row">
+                        <input type="text" id="numeroManifeste" placeholder="Numéro Manifeste (ex: MAN2025001)" required>
+                        <input type="text" id="transporteur" placeholder="Transporteur (ex: MAERSK LINE)" required>
+                    </div>
+                    <div class="form-row">
+                        <input type="text" id="portEmbarquement" placeholder="Port Embarquement" value="ROTTERDAM">
+                        <input type="text" id="portDebarquement" placeholder="Port Débarquement" value="ABIDJAN">
+                    </div>
+                    <div class="form-row">
+                        <input type="date" id="dateArrivee" required>
+                        <select id="paysDestination">
+                            <option value="BFA">Burkina Faso (BFA)</option>
+                            <option value="MLI">Mali (MLI)</option>
+                            <option value="NER">Niger (NER)</option>
+                        </select>
+                    </div>
+                    <div class="marchandise-section">
+                        <h3>Marchandises</h3>
+                        <div class="form-row">
+                            <input type="text" id="codeSH" placeholder="Code SH (ex: 8703.21.10)" value="8703.21.10">
+                            <input type="text" id="designation" placeholder="Désignation" value="Véhicule particulier">
+                        </div>
+                        <div class="form-row">
+                            <input type="number" id="poidsBrut" placeholder="Poids Brut (kg)" value="1500" step="0.01">
+                            <input type="number" id="nombreColis" placeholder="Nombre Colis" value="1">
+                        </div>
+                        <input type="text" id="destinataire" placeholder="Destinataire" value="IMPORT SARL OUAGADOUGOU">
+                    </div>
+                    <button type="submit" class="btn btn-primary">🚀 Créer et Transmettre Manifeste</button>
+                </form>
+            </section>
+
+            <section class="card">
+                <h2>📊 Statistiques</h2>
+                <div id="statistiques">
+                    <div class="stat-item">
+                        <span class="stat-label">Manifestes Traités:</span>
+                        <span class="stat-value" id="stat-manifestes">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Autorisations Reçues:</span>
+                        <span class="stat-value" id="stat-autorisations">0</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="chargerStatistiques()">🔄 Actualiser</button>
+            </section>
+
+            <section class="card">
+                <h2>📄 Manifestes Récents</h2>
+                <div id="manifestes-list">
+                    <p>Aucun manifeste...</p>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>🔓 Autorisations Mainlevée</h2>
+                <div id="autorisations-list">
+                    <p>Aucune autorisation...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="notification" class="notification"></div>
+    <script src="script.js"></script>
+</body>
+</html>

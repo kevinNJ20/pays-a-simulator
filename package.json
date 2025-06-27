@@ -1,0 +1,20 @@
+{
+    "name": "simulateur-pays-a-cotier",
+    "version": "1.0.0",
+    "description": "Simulateur Système Douanier Pays Côtier - POC UEMOA",
+    "main": "api/health.js",
+    "scripts": {
+      "dev": "vercel dev",
+      "build": "echo 'No build required'",
+      "start": "node api/health.js"
+    },
+    "dependencies": {
+      "axios": "^1.6.0",
+      "cors": "^2.8.5",
+      "express": "^4.18.2",
+      "uuid": "^9.0.1"
+    },
+    "engines": {
+      "node": "18.x"
+    }
+  }
