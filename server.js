@@ -1,6 +1,6 @@
 // ============================================================================
-// SERVEUR LOCAL SIMPLE - server.js
-// Créer ce fichier dans CHAQUE simulateur (pays-a, pays-b, commission)
+// SERVEUR LOCAL ADAPTÉ - server.js
+// Compatible avec les APIs écrites pour Vercel
 // ============================================================================
 
 const http = require('http');
@@ -36,6 +36,63 @@ const apiRouter = {
   'POST /api/mainlevee/autorisation': () => require('./api/mainlevee/autorisation')
 };
 
+// Fonction pour créer un objet de réponse compatible Vercel
+function createVercelResponse(res) {
+  const vercelRes = {
+    headers: {},
+    statusCode: 200,
+    
+    // Méthode pour définir le status
+    status: function(code) {
+      this.statusCode = code;
+      return this;
+    },
+    
+    // Méthode pour envoyer du JSON
+    json: function(data) {
+      this.headers['Content-Type'] = 'application/json';
+      res.writeHead(this.statusCode, this.headers);
+      res.end(JSON.stringify(data));
+      return this;
+    },
+    
+    // Méthode pour envoyer du texte
+    send: function(data) {
+      this.headers['Content-Type'] = 'text/plain';
+      res.writeHead(this.statusCode, this.headers);
+      res.end(data);
+      return this;
+    },
+    
+    // Méthode pour définir les headers
+    setHeader: function(name, value) {
+      this.headers[name] = value;
+      return this;
+    },
+    
+    // Méthode pour finir la réponse
+    end: function(data) {
+      res.writeHead(this.statusCode, this.headers);
+      res.end(data);
+      return this;
+    }
+  };
+  
+  return vercelRes;
+}
+
+// Fonction pour créer un objet de requête compatible Vercel
+function createVercelRequest(req, body, query) {
+  return {
+    ...req,
+    body: body || {},
+    query: query || {},
+    method: req.method,
+    url: req.url,
+    headers: req.headers
+  };
+}
+
 // Serveur HTTP
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -58,51 +115,64 @@ const server = http.createServer(async (req, res) => {
   try {
     // Router API
     const route = `${method} ${pathname}`;
-    if (apiRouter[route] || pathname.startsWith('/api/')) {
-      let handler = apiRouter[route];
-      
-      // Si pas de route exacte, essayer de trouver une route partielle
-      if (!handler) {
-        for (const [routePattern, routeHandler] of Object.entries(apiRouter)) {
-          const [routeMethod, routePath] = routePattern.split(' ');
-          if (routeMethod === method && pathname.startsWith(routePath)) {
-            handler = routeHandler;
-            break;
-          }
+    let handler = apiRouter[route];
+    
+    // Si pas de route exacte, essayer de trouver une route partielle
+    if (!handler) {
+      for (const [routePattern, routeHandler] of Object.entries(apiRouter)) {
+        const [routeMethod, routePath] = routePattern.split(' ');
+        if (routeMethod === method && pathname.startsWith(routePath)) {
+          handler = routeHandler;
+          break;
         }
       }
+    }
 
-      if (handler) {
+    if (handler && pathname.startsWith('/api/')) {
+      try {
+        // Créer les objets compatibles Vercel
+        const vercelRes = createVercelResponse(res);
+        
         // Lire le body pour les requêtes POST
-        let body = '';
+        let body = {};
         if (method === 'POST' || method === 'PUT') {
-          req.on('data', chunk => {
-            body += chunk.toString();
+          body = await new Promise((resolve, reject) => {
+            let data = '';
+            req.on('data', chunk => {
+              data += chunk.toString();
+            });
+            
+            req.on('end', () => {
+              try {
+                resolve(data ? JSON.parse(data) : {});
+              } catch (error) {
+                console.error('Erreur parsing JSON:', error);
+                resolve({});
+              }
+            });
+            
+            req.on('error', reject);
+            
+            // Timeout après 10 secondes
+            setTimeout(() => resolve({}), 10000);
           });
-          
-          req.on('end', async () => {
-            try {
-              req.body = body ? JSON.parse(body) : {};
-              req.query = parsedUrl.query;
-              
-              const apiHandler = handler();
-              await apiHandler(req, res);
-            } catch (error) {
-              console.error('Erreur API:', error);
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ 
-                error: 'Internal Server Error', 
-                message: error.message 
-              }));
-            }
-          });
-        } else {
-          req.query = parsedUrl.query;
-          const apiHandler = handler();
-          await apiHandler(req, res);
         }
-        return;
+        
+        const vercelReq = createVercelRequest(req, body, parsedUrl.query);
+        
+        // Exécuter le handler API
+        const apiHandler = handler();
+        await apiHandler(vercelReq, vercelRes);
+        
+      } catch (error) {
+        console.error('Erreur API:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          error: 'Internal Server Error', 
+          message: error.message 
+        }));
       }
+      return;
     }
 
     // Servir les fichiers statiques
@@ -125,10 +195,18 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(404, { 'Content-Type': 'text/html' });
       res.end(`
         <html>
+          <head>
+            <title>404 - Page Non Trouvée</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+              h1 { color: #e74c3c; }
+              a { color: #3498db; text-decoration: none; }
+            </style>
+          </head>
           <body>
             <h1>404 - Page Non Trouvée</h1>
             <p>La page ${pathname} n'existe pas.</p>
-            <p><a href="/">Retour à l'accueil</a></p>
+            <p><a href="/">← Retour à l'accueil</a></p>
           </body>
         </html>
       `);
@@ -146,15 +224,23 @@ const server = http.createServer(async (req, res) => {
 
 // Démarrer le serveur
 server.listen(PORT, HOST, () => {
-  console.log(`🚀 Serveur démarré sur http://${HOST}:${PORT}`);
+  console.log(`🚀 Serveur Pays A démarré sur http://${HOST}:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}`);
   console.log(`🔍 Health: http://localhost:${PORT}/api/health`);
+  console.log(`🔗 Kit URL: https://kit-interconnexion-uemoa-v4320.m3jzw3-1.deu-c1.cloudhub.io`);
   console.log(`⏹️  Arrêt: Ctrl+C`);
+  console.log('');
+  console.log('🏗️ Simulateur Pays A (Côtier) - Côte d\'Ivoire');
+  console.log('📋 Fonctionnalités disponibles:');
+  console.log('   • Création et transmission de manifestes');
+  console.log('   • Réception d\'autorisations de mainlevée');
+  console.log('   • Interface web interactive');
+  console.log('   • Monitoring des échanges avec le Kit');
 });
 
 // Gestion propre de l'arrêt
 process.on('SIGINT', () => {
-  console.log('\n🛑 Arrêt du serveur...');
+  console.log('\n🛑 Arrêt du serveur Pays A...');
   server.close(() => {
     console.log('✅ Serveur arrêté proprement');
     process.exit(0);
@@ -162,9 +248,18 @@ process.on('SIGINT', () => {
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Arrêt du serveur...');
+  console.log('\n🛑 Arrêt du serveur Pays A...');
   server.close(() => {
     console.log('✅ Serveur arrêté proprement');
     process.exit(0);
   });
+});
+
+// Gestion des erreurs non capturées
+process.on('uncaughtException', (error) => {
+  console.error('❌ Erreur non capturée:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promesse rejetée non gérée:', reason);
 });
