@@ -12,7 +12,7 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -22,7 +22,7 @@ body {
     padding: 30px;
     border-radius: 15px;
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
@@ -37,18 +37,83 @@ body {
     font-size: 1.1em;
 }
 
-.status {
-    margin-top: 15px;
-    display: inline-flex;
+.kit-status-banner {
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.kit-status-banner.connected {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.kit-status-banner.disconnected {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    color: white;
+}
+
+.kit-status-banner.checking {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.status-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.status-card h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.connection-status {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: #f8f9fa;
-    border-radius: 20px;
+    gap: 10px;
+    font-weight: bold;
 }
 
 .status-indicator {
-    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #dc3545;
+}
+
+.status-indicator.connected {
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.checking {
+    background: #ffc107;
+    animation: blink 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
 }
 
 .main {
@@ -62,6 +127,10 @@ body {
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.card.full-width {
+    grid-column: 1 / -1;
 }
 
 .card h2 {
@@ -78,11 +147,7 @@ body {
 }
 
 .form-row input,
-.form-row select,
-input[type="text"],
-input[type="date"],
-input[type="number"],
-select {
+.form-row select {
     padding: 12px 15px;
     border: 2px solid #e9ecef;
     border-radius: 8px;
@@ -91,9 +156,7 @@ select {
 }
 
 .form-row input:focus,
-.form-row select:focus,
-input:focus,
-select:focus {
+.form-row select:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -121,6 +184,7 @@ select:focus {
     transition: all 0.3s;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin: 5px;
 }
 
 .btn-primary {
@@ -136,31 +200,118 @@ select:focus {
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
-.btn-secondary {
-    background: #6c757d;
+.btn-test {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
 }
 
-.btn-secondary:hover {
-    background: #5a6268;
+.btn-diagnostic {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
 }
 
-.stat-item {
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.kit-interactions {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.interaction-item {
+    background: white;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.interaction-item.error {
+    border-left-color: #dc3545;
+}
+
+.interaction-item.warning {
+    border-left-color: #ffc107;
+}
+
+.interaction-header {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #e9ecef;
+    align-items: flex-start;
+    margin-bottom: 10px;
 }
 
-.stat-label {
-    font-weight: 600;
-    color: #495057;
-}
-
-.stat-value {
+.interaction-title {
     font-weight: bold;
-    color: #667eea;
-    font-size: 1.2em;
+    color: #2c3e50;
+    font-size: 1.1em;
+}
+
+.interaction-time {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.manifeste-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.manifeste-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.manifeste-item.transmitted {
+    border-left-color: #28a745;
+}
+
+.manifeste-item.error {
+    border-left-color: #dc3545;
+}
+
+.manifeste-header {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.manifeste-details {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.transmission-status {
+    margin-top: 5px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.transmission-status.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.transmission-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.transmission-status.pending {
+    background: #fff3cd;
+    color: #856404;
 }
 
 .notification {
@@ -174,6 +325,7 @@ select:focus {
     transform: translateX(400px);
     transition: transform 0.3s;
     z-index: 1000;
+    max-width: 350px;
 }
 
 .notification.show {
@@ -188,24 +340,22 @@ select:focus {
     background: linear-gradient(135deg, #dc3545, #fd7e14);
 }
 
-.manifeste-item,
-.autorisation-item {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    border-left: 4px solid #667eea;
+.notification.info {
+    background: linear-gradient(135deg, #007bff, #6610f2);
 }
 
-.manifeste-header {
-    font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 5px;
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
 }
 
-.manifeste-details {
-    font-size: 0.9em;
-    color: #6c757d;
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {
