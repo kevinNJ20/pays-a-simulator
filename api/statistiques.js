@@ -20,15 +20,25 @@ module.exports = async (req, res) => {
       const stats = database.obtenirStatistiques();
       const interactions = database.obtenirInteractionsKit(10);
       
-      // Test rapide de connectivité Kit (sans bloquer)
+      // ✅ CORRECTION: Test Kit direct vers MuleSoft (sans bloquer)
       let kitInfo = null;
       try {
+        console.log('🔍 [Pays A] Test Kit MuleSoft direct...');
         kitInfo = await Promise.race([
-          kitClient.verifierSante(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+          kitClient.verifierSante(), // ✅ Va maintenant directement vers MuleSoft
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout Kit MuleSoft > 5s')), 5000)
+          )
         ]);
+        console.log('✅ [Pays A] Kit MuleSoft status:', kitInfo.status);
       } catch (error) {
-        kitInfo = { accessible: false, erreur: 'Timeout ou inaccessible' };
+        console.error('❌ [Pays A] Kit MuleSoft inaccessible:', error.message);
+        kitInfo = { 
+          accessible: false, 
+          erreur: error.message,
+          status: 'TIMEOUT_OU_INACCESSIBLE',
+          source: 'DIRECT_MULESOFT_TEST'
+        };
       }
 
       // Calculer des métriques avancées
@@ -49,13 +59,15 @@ module.exports = async (req, res) => {
           }
         },
         
-        // Informations Kit
+        // ✅ CORRECTION: Informations Kit MuleSoft directes
         kit: {
           status: kitInfo?.status || 'UNKNOWN',
           accessible: kitInfo?.accessible || false,
-          url: kitClient.baseURL,
+          url: kitClient.baseURL, // URL MuleSoft directe
           latence: kitInfo?.latence || null,
-          dernierTest: kitInfo?.timestamp || new Date().toISOString()
+          dernierTest: kitInfo?.timestamp || new Date().toISOString(),
+          modeConnexion: 'DIRECT_MULESOFT', // ✅ Indique connexion directe
+          source: kitInfo?.source || 'DIRECT_MULESOFT_TEST'
         },
         
         // Interactions récentes avec le Kit
@@ -78,16 +90,24 @@ module.exports = async (req, res) => {
         // Données pour graphiques
         tendances: metriques.tendances,
         
-        // Santé du système
+        // ✅ CORRECTION: Santé du système avec info Kit directe
         systemeSante: {
           servicePrincipal: 'UP',
           baseDonnees: 'UP',
           kitInterconnexion: kitInfo?.accessible ? 'UP' : 'DOWN',
+          modeIntegration: 'DIRECT_MULESOFT', // ✅ Nouveau champ
+          urlKit: kitClient.baseURL, // ✅ URL directe MuleSoft
           derniereMiseAJour: stats.derniereMiseAJour
         }
       };
 
-      res.status(200).json(reponse);
+      // ✅ Status global (DEGRADED si Kit inaccessible mais service fonctionne)
+      const globalStatus = kitInfo?.accessible ? 'UP' : 'DEGRADED';
+      
+      res.status(200).json({
+        ...reponse,
+        status: globalStatus
+      });
       
     } catch (error) {
       console.error('❌ [Pays A] Erreur récupération statistiques:', error);
@@ -107,7 +127,7 @@ module.exports = async (req, res) => {
   }
 };
 
-// Fonction pour calculer des métriques avancées
+// Fonction pour calculer des métriques avancées (inchangée)
 function calculerMetriques(stats, interactions) {
   // Taux de réussite global
   const tauxReussiteGlobal = stats.transmissionsKit > 0 

@@ -1,3 +1,8 @@
+// ============================================================================
+// PAYS A - Script Frontend CORRIGÉ avec Tests Hybrides
+// Fichier: public/script.js
+// ============================================================================
+
 // Configuration API - PAYS A CORRIGÉ
 const API_BASE = window.location.origin + '/api';
 const KIT_MULESOFT_URL = 'https://kit-interconnexion-uemoa-v4320.m3jzw3-1.deu-c1.cloudhub.io/api/v1';
@@ -10,7 +15,7 @@ let kitConnected = false;
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initialisation Pays A - Monitoring Kit MuleSoft avec Test Direct');
+    console.log('🚀 Initialisation Pays A - Monitoring Kit MuleSoft avec Tests Hybrides');
     
     // Définir la date par défaut
     document.getElementById('dateArrivee').value = new Date().toISOString().split('T')[0];
@@ -70,14 +75,21 @@ async function verifierStatutKit() {
     }
 }
 
-// ✅ CORRECTION: Test de connexion Kit DIRECT vers MuleSoft
+// ✅ CORRECTION MAJEURE: Test de connexion Kit HYBRIDE (Direct + Proxy)
 async function testerConnexionKit() {
-    ajouterInteraction('🔧 Test connexion Kit', 'Test connectivité directe vers Kit MuleSoft...');
+    ajouterInteraction('🔧 Test connexion Kit', 'Test hybride: Direct + Proxy serveur...');
+    afficherNotification('🔧 Test Kit en cours (Direct + Proxy)...', 'info');
     
-    const startTime = Date.now();
+    const resultats = {
+        testDirect: null,
+        testProxy: null,
+        recommendation: ''
+    };
     
+    // === TEST 1: DIRECT vers MuleSoft (pour diagnostiquer CORS) ===
+    console.log('🔍 Test 1: Browser → Kit MuleSoft (Direct)');
     try {
-        // ✅ APPEL DIRECT vers le Kit MuleSoft
+        const startTime = Date.now();
         const response = await fetch(`${KIT_MULESOFT_URL}/health`, {
             method: 'GET',
             headers: {
@@ -86,249 +98,176 @@ async function testerConnexionKit() {
                 'X-Source-Country': window.PAYS_CODE,
                 'User-Agent': 'PaysA-Dashboard/1.0'
             },
-            signal: AbortSignal.timeout(10000) // 10 secondes timeout
+            signal: AbortSignal.timeout(8000)
         });
         
         const latence = Date.now() - startTime;
         
         if (response.ok) {
             const data = await response.json();
-            afficherNotification(`✅ Kit MuleSoft accessible - ${response.status} (${latence}ms)`, 'success');
-            ajouterInteraction('🔧 Test Kit Direct', `✅ Succès - Latence: ${latence}ms, Version: ${data.version || 'N/A'}`);
-            
-            // Log détaillé du Kit
-            console.log('📊 Réponse Kit MuleSoft:', data);
-            
+            resultats.testDirect = {
+                success: true,
+                latence,
+                status: response.status,
+                version: data.version || 'N/A',
+                methode: 'DIRECT_BROWSER'
+            };
+            console.log('✅ Test Direct réussi:', resultats.testDirect);
         } else {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
     } catch (error) {
-        const latence = Date.now() - startTime;
-        let messageErreur = 'Kit MuleSoft inaccessible';
-        
-        if (error.name === 'TimeoutError') {
-            messageErreur = 'Timeout - Kit MuleSoft ne répond pas (>10s)';
-        } else if (error.message.includes('CORS')) {
-            messageErreur = 'Erreur CORS - Configuration Kit à vérifier';
-        } else if (error.message.includes('Failed to fetch')) {
-            messageErreur = 'Erreur réseau - Kit MuleSoft inaccessible';
-        } else {
-            messageErreur = `Erreur: ${error.message}`;
-        }
-        
-        afficherNotification(`❌ ${messageErreur} (${latence}ms)`, 'error');
-        ajouterInteraction('🔧 Test Kit Direct', `❌ Échec - ${messageErreur}`);
-    }
-}
-
-// ✅ NOUVEAU: Test complet (Direct + Via API locale)
-async function testerConnexionKitComplet() {
-    ajouterInteraction('🔍 Test complet', 'Test connectivité Kit - Direct + Via API locale');
-    
-    // Test 1: Direct depuis le browser
-    console.log('🔍 Test 1: Connectivité directe browser → Kit MuleSoft');
-    const testDirect = await testerKitDirect();
-    
-    // Test 2: Via l'API locale 
-    console.log('🔍 Test 2: Connectivité via API locale → Kit MuleSoft');
-    const testViaAPI = await testerKitViaAPI();
-    
-    // Comparaison des résultats
-    const resultats = {
-        testDirect: {
-            accessible: testDirect.accessible,
-            latence: testDirect.latence,
-            source: 'Browser → Kit MuleSoft'
-        },
-        testViaAPI: {
-            accessible: testViaAPI.accessible,
-            latence: testViaAPI.latence,
-            source: 'API Locale → Kit MuleSoft'
-        },
-        coherent: testDirect.accessible === testViaAPI.accessible
-    };
-    
-    console.log('📊 Comparaison tests Kit:', resultats);
-    
-    const message = `Direct: ${testDirect.accessible ? '✅' : '❌'} (${testDirect.latence}ms) | ` +
-                   `API: ${testViaAPI.accessible ? '✅' : '❌'} (${testViaAPI.latence}ms)`;
-    
-    ajouterInteraction('🔍 Test complet', message);
-    
-    if (!resultats.coherent) {
-        afficherNotification('⚠️ Résultats incohérents entre test direct et API locale', 'warning');
-    } else {
-        afficherNotification('✅ Tests cohérents - Connectivité validée', 'success');
+        resultats.testDirect = {
+            success: false,
+            latence: 0,
+            erreur: error.message,
+            methode: 'DIRECT_BROWSER'
+        };
+        console.log('❌ Test Direct échoué:', resultats.testDirect);
     }
     
-    return resultats;
-}
-
-// Test Kit direct (helper function)
-async function testerKitDirect() {
-    const startTime = Date.now();
-    
+    // === TEST 2: VIA PROXY SERVEUR ===
+    console.log('🔍 Test 2: Browser → API Locale → Kit MuleSoft (Proxy)');
     try {
-        const response = await fetch(`${KIT_MULESOFT_URL}/health`, {
+        const startTime = Date.now();
+        const response = await fetch(`${API_BASE}/kit/test?type=health`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Source-System': 'PAYS_A_DASHBOARD',
-                'X-Source-Country': window.PAYS_CODE
+                'Content-Type': 'application/json'
             },
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(15000) // Plus de temps pour le proxy
         });
         
         const latence = Date.now() - startTime;
-        
-        return {
-            accessible: response.ok,
-            latence,
-            status: response.status
-        };
-        
-    } catch (error) {
-        return {
-            accessible: false,
-            latence: Date.now() - startTime,
-            erreur: error.message
-        };
-    }
-}
-
-// Test Kit via API locale (helper function)  
-async function testerKitViaAPI() {
-    const startTime = Date.now();
-    
-    try {
-        const response = await fetch(`${API_BASE}/health`);
         const data = await response.json();
         
-        const latence = Date.now() - startTime;
-        
-        return {
-            accessible: data.kit?.accessible || false,
-            latence: data.kit?.latence || latence
-        };
+        if (response.ok && data.status === 'SUCCESS') {
+            resultats.testProxy = {
+                success: true,
+                latence,
+                latenceKit: data.resultat?.latence || 0,
+                version: data.resultat?.version || 'N/A',
+                methode: 'PROXY_SERVEUR'
+            };
+            console.log('✅ Test Proxy réussi:', resultats.testProxy);
+        } else {
+            throw new Error(data.message || 'Erreur proxy');
+        }
         
     } catch (error) {
-        return {
-            accessible: false,
-            latence: Date.now() - startTime,
-            erreur: error.message
+        resultats.testProxy = {
+            success: false,
+            latence: 0,
+            erreur: error.message,
+            methode: 'PROXY_SERVEUR'
         };
+        console.log('❌ Test Proxy échoué:', resultats.testProxy);
     }
+    
+    // === ANALYSE DES RÉSULTATS ===
+    if (resultats.testDirect.success && resultats.testProxy.success) {
+        resultats.recommendation = 'Les deux méthodes fonctionnent - CORS autorisé';
+        afficherNotification(`✅ Kit accessible - Direct: ${resultats.testDirect.latence}ms | Proxy: ${resultats.testProxy.latence}ms`, 'success');
+        ajouterInteraction('🔧 Test Kit', `✅ Succès complet - Direct: ${resultats.testDirect.latence}ms, Proxy: ${resultats.testProxy.latence}ms`);
+        kitConnected = true;
+    } else if (!resultats.testDirect.success && resultats.testProxy.success) {
+        resultats.recommendation = 'Seul le proxy fonctionne - CORS bloqué par navigateur';
+        afficherNotification(`⚠️ Kit accessible via proxy uniquement (${resultats.testProxy.latence}ms) - CORS bloqué`, 'warning');
+        ajouterInteraction('🔧 Test Kit', `⚠️ Proxy OK (${resultats.testProxy.latence}ms) - Direct bloqué: ${resultats.testDirect.erreur}`);
+        kitConnected = true; // Via proxy
+    } else if (resultats.testDirect.success && !resultats.testProxy.success) {
+        resultats.recommendation = 'Direct OK mais proxy KO - Problème configuration serveur';
+        afficherNotification(`⚠️ Kit accessible direct uniquement (${resultats.testDirect.latence}ms) - Proxy défaillant`, 'warning');
+        ajouterInteraction('🔧 Test Kit', `⚠️ Direct OK (${resultats.testDirect.latence}ms) - Proxy KO: ${resultats.testProxy.erreur}`);
+        kitConnected = true; // Via direct
+    } else {
+        resultats.recommendation = 'Kit MuleSoft complètement inaccessible';
+        afficherNotification('❌ Kit MuleSoft inaccessible par toutes les méthodes', 'error');
+        ajouterInteraction('🔧 Test Kit', `❌ Échec total - Direct: ${resultats.testDirect.erreur}, Proxy: ${resultats.testProxy.erreur}`);
+        kitConnected = false;
+    }
+    
+    console.log('📊 Résultat final du test hybride:', resultats);
+    return resultats;
 }
 
-// ✅ NOUVEAU: Diagnostic complet Kit MuleSoft
+// ✅ NOUVEAU: Diagnostic complet Kit MuleSoft avec tests hybrides
 async function lancerDiagnostic() {
     ajouterInteraction('🩺 Diagnostic', 'Démarrage diagnostic complet Kit MuleSoft...');
     afficherNotification('🩺 Diagnostic Kit en cours...', 'info');
     
-    const diagnostic = {
-        timestamp: new Date().toISOString(),
-        systeme: window.SYSTEME_TYPE,
-        pays: window.PAYS_CODE,
-        tests: {}
-    };
-    
-    // Test 1: Health Check
-    console.log('🏥 Test Health Check...');
-    diagnostic.tests.health = await testerEndpointKit('/health', 'GET');
-    
-    // Test 2: Console Access
-    console.log('🖥️ Test Console Access...');
-    diagnostic.tests.console = await testerEndpointKit('/console', 'GET');
-    
-    // Test 3: Endpoint Transmission Manifeste (spécifique Pays A)
-    console.log('📋 Test endpoint transmission manifeste...');
-    diagnostic.tests.manifesteTransmission = await testerEndpointKit('/manifeste/transmission', 'POST', {
-        numeroManifeste: `TEST_${Date.now()}`,
-        transporteur: 'TEST CARRIER',
-        dateArrivee: new Date().toISOString().split('T')[0],
-        marchandises: [{
-            designation: 'Test diagnostic',
-            poidsBrut: 1000,
-            nombreColis: 1,
-            paysDestination: 'BFA'
-        }]
-    });
-    
-    // Résumé du diagnostic
-    const testsReussis = Object.values(diagnostic.tests).filter(t => t.accessible).length;
-    const totalTests = Object.keys(diagnostic.tests).length;
-    
-    diagnostic.resume = {
-        testsReussis,
-        totalTests,
-        tauxReussite: Math.round((testsReussis / totalTests) * 100),
-        kitOperationnel: testsReussis > 0
-    };
-    
-    console.log('📊 Diagnostic Kit terminé:', diagnostic.resume);
-    
-    const message = `Terminé - ${testsReussis}/${totalTests} tests réussis (${diagnostic.resume.tauxReussite}%)`;
-    ajouterInteraction('🩺 Diagnostic', message);
-    
-    if (diagnostic.resume.kitOperationnel) {
-        afficherNotification(`✅ Kit opérationnel - ${message}`, 'success');
-    } else {
-        afficherNotification(`❌ Kit défaillant - ${message}`, 'error');
-    }
-    
-    return diagnostic;
-}
-
-// Utilitaire pour tester un endpoint spécifique du Kit
-async function testerEndpointKit(endpoint, method = 'GET', testData = null) {
-    const startTime = Date.now();
-    
     try {
-        const options = {
-            method,
+        // Utiliser le proxy serveur pour le diagnostic (plus fiable)
+        const response = await fetch(`${API_BASE}/kit/test?type=diagnostic`, {
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Source-System': 'PAYS_A_DASHBOARD',
-                'X-Source-Country': window.PAYS_CODE,
-                'X-Test-Type': 'DIAGNOSTIC'
+                'Content-Type': 'application/json'
             },
-            signal: AbortSignal.timeout(5000)
-        };
+            signal: AbortSignal.timeout(30000) // 30 secondes pour diagnostic complet
+        });
         
-        // Pour les tests POST, ajouter des données test
-        if (method === 'POST') {
-            options.body = JSON.stringify(testData || {
-                test: true,
-                timestamp: new Date().toISOString(),
-                source: 'PAYS_A_DIAGNOSTIC'
-            });
+        const data = await response.json();
+        
+        if (response.ok && data.status === 'SUCCESS') {
+            const diagnostic = data.resultat;
+            const testsReussis = Object.values(diagnostic.tests || {}).filter(t => t.success).length;
+            const totalTests = Object.keys(diagnostic.tests || {}).length;
+            
+            const message = `Terminé - ${testsReussis}/${totalTests} tests réussis`;
+            ajouterInteraction('🩺 Diagnostic', message);
+            
+            if (testsReussis > 0) {
+                afficherNotification(`✅ Kit opérationnel - ${message}`, 'success');
+            } else {
+                afficherNotification(`❌ Kit défaillant - ${message}`, 'error');
+            }
+            
+            console.log('📊 Diagnostic Kit complet:', diagnostic);
+        } else {
+            throw new Error(data.message || 'Diagnostic échoué');
         }
         
-        const response = await fetch(`${KIT_MULESOFT_URL}${endpoint}`, options);
-        const latence = Date.now() - startTime;
-        
-        return {
-            accessible: response.ok,
-            status: response.status,
-            latence,
-            endpoint,
-            method
-        };
-        
     } catch (error) {
-        return {
-            accessible: false,
-            status: 0,
-            latence: Date.now() - startTime,
-            endpoint,
-            method,
-            erreur: error.message
-        };
+        ajouterInteraction('🩺 Diagnostic', `❌ Erreur - ${error.message}`);
+        afficherNotification('❌ Diagnostic Kit échoué', 'error');
+        console.error('Erreur diagnostic:', error);
     }
 }
 
-// Création de manifeste (reste inchangé)
+// ✅ NOUVEAU: Test avancé - Transmission manifeste vers Kit
+async function testerTransmissionKit() {
+    ajouterInteraction('📦 Test transmission', 'Test envoi manifeste vers Kit...');
+    
+    try {
+        const response = await fetch(`${API_BASE}/kit/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'transmission_test',
+                payload: {}
+            }),
+            signal: AbortSignal.timeout(15000)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.status === 'SUCCESS') {
+            afficherNotification('✅ Test transmission manifeste réussi', 'success');
+            ajouterInteraction('📦 Test transmission', `✅ Succès - Latence: ${data.resultat?.latence || 'N/A'}ms`);
+        } else {
+            throw new Error(data.message || 'Test transmission échoué');
+        }
+        
+    } catch (error) {
+        afficherNotification('❌ Test transmission échoué: ' + error.message, 'error');
+        ajouterInteraction('📦 Test transmission', `❌ Échec - ${error.message}`);
+    }
+}
+
+// Création de manifeste (reste inchangé mais avec gestion d'erreur améliorée)
 async function creerManifeste(event) {
     event.preventDefault();
     
@@ -400,7 +339,11 @@ async function creerManifeste(event) {
     }
 }
 
-// Charger toutes les données (reste inchangé)
+// ===============================
+// FONCTIONS UTILITAIRES (inchangées)
+// ===============================
+
+// Charger toutes les données
 async function chargerDonnees() {
     await Promise.all([
         chargerStatistiques(),
@@ -408,7 +351,7 @@ async function chargerDonnees() {
     ]);
 }
 
-// Charger statistiques (reste inchangé)
+// Charger statistiques
 async function chargerStatistiques() {
     try {
         const response = await fetch(`${API_BASE}/statistiques`);
@@ -430,7 +373,7 @@ async function chargerStatistiques() {
     }
 }
 
-// Charger manifestes (reste inchangé)
+// Charger manifestes
 async function chargerManifestes() {
     try {
         const response = await fetch(`${API_BASE}/manifeste/lister?limite=5`);
@@ -473,7 +416,7 @@ async function chargerManifestes() {
     }
 }
 
-// Ajouter interaction (reste inchangé)
+// Ajouter interaction
 function ajouterInteraction(title, details) {
     const container = document.getElementById('kit-interactions');
     const timestamp = new Date().toLocaleTimeString();
@@ -505,7 +448,7 @@ function ajouterInteraction(title, details) {
     }
 }
 
-// Notification (reste inchangé)
+// Notification
 function afficherNotification(message, type) {
     const notification = document.getElementById('notification');
     notification.textContent = message;
@@ -517,7 +460,14 @@ function afficherNotification(message, type) {
     }, 5000);
 }
 
-// Cleanup (reste inchangé)
+// Fonctions publiques pour les boutons HTML
+window.chargerStatistiques = chargerStatistiques;
+window.chargerManifestes = chargerManifestes;
+window.testerConnexionKit = testerConnexionKit;
+window.lancerDiagnostic = lancerDiagnostic;
+window.testerTransmissionKit = testerTransmissionKit;
+
+// Cleanup
 window.addEventListener('beforeunload', () => {
     if (statusInterval) clearInterval(statusInterval);
     if (refreshInterval) clearInterval(refreshInterval);
