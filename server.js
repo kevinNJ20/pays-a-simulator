@@ -1,5 +1,6 @@
 // ============================================================================
-// SERVEUR LOCAL ADAPTÉ - server.js
+// SERVEUR LOCAL PAYS A (CÔTIER) - server.js
+// Côte d'Ivoire - Système Douanier Côtier
 // Compatible avec les APIs écrites pour Vercel
 // ============================================================================
 
@@ -8,9 +9,14 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-// Configuration du serveur
-const PORT = process.env.PORT || 3000;
+// Configuration du serveur - PAYS A
+const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
+const PAYS_CODE = 'CIV';
+const PAYS_NOM = 'Côte d\'Ivoire';
+const PAYS_TYPE = 'COTIER';
+
+console.log(`🏗️ Démarrage serveur ${PAYS_NOM} (${PAYS_TYPE})...`);
 
 // Types MIME
 const mimeTypes = {
@@ -25,15 +31,16 @@ const mimeTypes = {
   '.svg': 'image/svg+xml'
 };
 
-// Router pour les APIs
+// Router pour les APIs PAYS A
 const apiRouter = {
   'GET /api/health': () => require('./api/health'),
   'GET /api/statistiques': () => require('./api/statistiques'),
   'POST /api/manifeste/creer': () => require('./api/manifeste/creer'),
   'GET /api/manifeste/lister': () => require('./api/manifeste/lister'),
-  'POST /api/paiement/effectuer': () => require('./api/paiement/effectuer'),
   'GET /api/mainlevee/autorisation': () => require('./api/mainlevee/autorisation'),
-  'POST /api/mainlevee/autorisation': () => require('./api/mainlevee/autorisation')
+  'POST /api/mainlevee/autorisation': () => require('./api/mainlevee/autorisation'),
+  'GET /api/kit/test': () => require('./api/kit/test'),
+  'POST /api/kit/test': () => require('./api/kit/test')
 };
 
 // Fonction pour créer un objet de réponse compatible Vercel
@@ -42,13 +49,11 @@ function createVercelResponse(res) {
     headers: {},
     statusCode: 200,
     
-    // Méthode pour définir le status
     status: function(code) {
       this.statusCode = code;
       return this;
     },
     
-    // Méthode pour envoyer du JSON
     json: function(data) {
       this.headers['Content-Type'] = 'application/json';
       res.writeHead(this.statusCode, this.headers);
@@ -56,7 +61,6 @@ function createVercelResponse(res) {
       return this;
     },
     
-    // Méthode pour envoyer du texte
     send: function(data) {
       this.headers['Content-Type'] = 'text/plain';
       res.writeHead(this.statusCode, this.headers);
@@ -64,13 +68,11 @@ function createVercelResponse(res) {
       return this;
     },
     
-    // Méthode pour définir les headers
     setHeader: function(name, value) {
       this.headers[name] = value;
       return this;
     },
     
-    // Méthode pour finir la réponse
     end: function(data) {
       res.writeHead(this.statusCode, this.headers);
       res.end(data);
@@ -99,7 +101,7 @@ const server = http.createServer(async (req, res) => {
   const pathname = parsedUrl.pathname;
   const method = req.method;
 
-  console.log(`${method} ${pathname}`);
+  console.log(`${method} ${pathname} - [${PAYS_CODE}]`);
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -165,11 +167,12 @@ const server = http.createServer(async (req, res) => {
         await apiHandler(vercelReq, vercelRes);
         
       } catch (error) {
-        console.error('Erreur API:', error);
+        console.error('❌ Erreur API:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           error: 'Internal Server Error', 
-          message: error.message 
+          message: error.message,
+          pays: PAYS_CODE
         }));
       }
       return;
@@ -196,51 +199,68 @@ const server = http.createServer(async (req, res) => {
       res.end(`
         <html>
           <head>
-            <title>404 - Page Non Trouvée</title>
+            <title>404 - Page Non Trouvée - ${PAYS_NOM}</title>
             <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+              }
               h1 { color: #e74c3c; }
               a { color: #3498db; text-decoration: none; }
+              .container { background: rgba(255,255,255,0.9); padding: 40px; border-radius: 15px; color: #333; display: inline-block; }
             </style>
           </head>
           <body>
-            <h1>404 - Page Non Trouvée</h1>
-            <p>La page ${pathname} n'existe pas.</p>
-            <p><a href="/">← Retour à l'accueil</a></p>
+            <div class="container">
+              <h1>🏗️ ${PAYS_NOM} (${PAYS_TYPE})</h1>
+              <h2>404 - Page Non Trouvée</h2>
+              <p>La page ${pathname} n'existe pas sur le système douanier de ${PAYS_NOM}.</p>
+              <p><a href="/">← Retour au Dashboard ${PAYS_CODE}</a></p>
+            </div>
           </body>
         </html>
       `);
     }
 
   } catch (error) {
-    console.error('Erreur serveur:', error);
+    console.error('❌ Erreur serveur:', error);
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ 
       error: 'Internal Server Error', 
-      message: error.message 
+      message: error.message,
+      pays: PAYS_CODE
     }));
   }
 });
 
 // Démarrer le serveur
 server.listen(PORT, HOST, () => {
-  console.log(`🚀 Serveur Pays A démarré sur http://${HOST}:${PORT}`);
+  console.log('');
+  console.log('🌊 ============================================================');
+  console.log(`🏗️ Serveur ${PAYS_NOM} (${PAYS_TYPE}) démarré`);
+  console.log(`🌍 URL: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}`);
   console.log(`🔍 Health: http://localhost:${PORT}/api/health`);
   console.log(`🔗 Kit URL: https://kit-interconnexion-uemoa-v4320.m3jzw3-1.deu-c1.cloudhub.io`);
   console.log(`⏹️  Arrêt: Ctrl+C`);
+  console.log('🌊 ============================================================');
   console.log('');
-  console.log('🏗️ Simulateur Pays A (Côtier) - Côte d\'Ivoire');
+  console.log(`🏗️ Simulateur ${PAYS_NOM} - Système Douanier Côtier`);
   console.log('📋 Fonctionnalités disponibles:');
   console.log('   • Création et transmission de manifestes');
-  console.log('   • Réception d\'autorisations de mainlevée');
-  console.log('   • Interface web interactive');
-  console.log('   • Monitoring des échanges avec le Kit');
+  console.log('   • Réception d\'autorisations de mainlevée depuis Kit MuleSoft');
+  console.log('   • Interface web interactive avec monitoring temps réel');
+  console.log('   • Tests de connectivité Kit d\'Interconnexion');
+  console.log(`   • Code pays: ${PAYS_CODE} | Type: ${PAYS_TYPE}`);
+  console.log('');
 });
 
 // Gestion propre de l'arrêt
 process.on('SIGINT', () => {
-  console.log('\n🛑 Arrêt du serveur Pays A...');
+  console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM}...`);
   server.close(() => {
     console.log('✅ Serveur arrêté proprement');
     process.exit(0);
@@ -248,7 +268,7 @@ process.on('SIGINT', () => {
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Arrêt du serveur Pays A...');
+  console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM}...`);
   server.close(() => {
     console.log('✅ Serveur arrêté proprement');
     process.exit(0);
@@ -257,9 +277,9 @@ process.on('SIGTERM', () => {
 
 // Gestion des erreurs non capturées
 process.on('uncaughtException', (error) => {
-  console.error('❌ Erreur non capturée:', error);
+  console.error(`❌ [${PAYS_CODE}] Erreur non capturée:`, error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promesse rejetée non gérée:', reason);
+  console.error(`❌ [${PAYS_CODE}] Promesse rejetée non gérée:`, reason);
 });

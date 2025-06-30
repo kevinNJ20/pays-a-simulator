@@ -15,10 +15,12 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     try {
       console.log('📋 [Pays A] Nouvelle demande création manifeste:', req.body?.numeroManifeste);
+      console.log('📋 [Pays A] Données reçues:', JSON.stringify(req.body, null, 2));
 
       // Validation des données
       const erreurs = validerDonneesManifeste(req.body);
       if (erreurs.length > 0) {
+        console.error('❌ [Pays A] Validation échouée:', erreurs);
         return res.status(400).json({
           status: 'ERROR',
           message: 'Données manifeste invalides',
@@ -27,9 +29,10 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Étape 1: Créer le manifeste localement
+      // Étape 1: Créer le manifeste localement TOUJOURS
       const manifeste = database.creerManifeste(req.body);
       console.log(`✅ [Pays A] Manifeste créé localement: ${manifeste.id}`);
+      console.log(`📊 [Pays A] Manifeste créé:`, JSON.stringify(manifeste, null, 2));
 
       // Étape 2: Transmettre DIRECTEMENT au Kit MuleSoft
       let transmissionReussie = false;
@@ -37,13 +40,22 @@ module.exports = async (req, res) => {
       let erreurTransmission = null;
 
       try {
-        console.log(`🚀 [Pays A] Transmission DIRECTE vers Kit MuleSoft: ${manifeste.id}`);
+        console.log(`🚀 [Pays A] Début transmission DIRECTE vers Kit MuleSoft: ${manifeste.id}`);
         
-        // ✅ CORRECTION: Appel direct vers MuleSoft via kit-client corrigé
-        reponseKit = await kitClient.transmettreManifeste(manifeste);
+        // ✅ CORRECTION: Appel direct vers MuleSoft avec timeout plus long
+        const startTime = Date.now();
+        reponseKit = await Promise.race([
+          kitClient.transmettreManifeste(manifeste),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout transmission Kit MuleSoft > 45s')), 45000)
+          )
+        ]);
+        const duration = Date.now() - startTime;
+        reponseKit.latence = duration;
+        
         transmissionReussie = true;
         
-        console.log(`✅ [Pays A] Transmission Kit MuleSoft réussie:`, {
+        console.log(`✅ [Pays A] Transmission Kit MuleSoft réussie (${duration}ms):`, {
           manifesteId: manifeste.id,
           kitResponse: reponseKit.status,
           latence: reponseKit.latence,
@@ -54,18 +66,46 @@ module.exports = async (req, res) => {
         console.error(`❌ [Pays A] Erreur transmission Kit MuleSoft:`, {
           manifesteId: manifeste.id,
           erreur: error.message,
+          stack: error.stack,
           details: error.response?.data || error.cause
         });
         erreurTransmission = error.message;
         transmissionReussie = false;
+        
+        // ✅ AMÉLIORATION: Enregistrer l'erreur avec plus de détails
+        reponseKit = {
+          status: 'ERROR',
+          message: error.message,
+          erreur: error.message,
+          timestamp: new Date(),
+          latence: 0
+        };
       }
 
-      // Étape 3: Enregistrer le résultat de la transmission
-      database.enregistrerTransmissionKit(
-        manifeste.id, 
-        reponseKit || { erreur: erreurTransmission }, 
-        transmissionReussie
-      );
+      // Étape 3: Enregistrer le résultat de la transmission TOUJOURS
+      try {
+        database.enregistrerTransmissionKit(
+          manifeste.id, 
+          reponseKit || { erreur: erreurTransmission }, 
+          transmissionReussie
+        );
+        console.log(`📝 [Pays A] Transmission Kit enregistrée pour manifeste ${manifeste.id}`);
+      } catch (dbError) {
+        console.error(`❌ [Pays A] Erreur enregistrement transmission:`, dbError);
+        // Continue même si l'enregistrement échoue
+      }
+
+      // ✅ CORRECTION: Mettre à jour les statistiques TOUJOURS
+      try {
+        const statsUpdated = database.obtenirStatistiques();
+        console.log(`📊 [Pays A] Statistiques mises à jour:`, {
+          manifestesCreees: statsUpdated.manifestesCreees,
+          transmissionsKit: statsUpdated.transmissionsKit,
+          transmissionsReussies: statsUpdated.transmissionsReussies
+        });
+      } catch (statsError) {
+        console.error(`❌ [Pays A] Erreur mise à jour statistiques:`, statsError);
+      }
 
       // Étape 4: Préparer la réponse
       const reponse = {
@@ -92,7 +132,7 @@ module.exports = async (req, res) => {
           timestamp: new Date().toISOString(),
           latence: reponseKit?.latence || null,
           correlationId: reponseKit?.correlationId || null,
-          ...(reponseKit && { 
+          ...(reponseKit && transmissionReussie && { 
             reponseKit: {
               status: reponseKit.status,
               message: reponseKit.message,
@@ -101,7 +141,8 @@ module.exports = async (req, res) => {
           }),
           ...(erreurTransmission && { 
             erreur: erreurTransmission,
-            recommandation: 'Vérifiez la connectivité avec Kit MuleSoft'
+            detailsErreur: reponseKit,
+            recommandation: 'Vérifiez la connectivité avec Kit MuleSoft et les logs détaillés'
           })
         },
         
@@ -128,11 +169,16 @@ module.exports = async (req, res) => {
         local: '✅ SAUVEGARDE',
         kitMulesoft: transmissionReussie ? '✅ TRANSMIS' : '❌ ECHEC',
         latence: reponseKit?.latence || 'N/A',
-        destination: manifeste.marchandises?.[0]?.paysDestination
+        destination: manifeste.marchandises?.[0]?.paysDestination,
+        erreur: erreurTransmission || 'N/A'
       });
       
     } catch (error) {
-      console.error('❌ [Pays A] Erreur création manifeste:', error);
+      console.error('❌ [Pays A] Erreur création manifeste:', {
+        message: error.message,
+        stack: error.stack,
+        requestBody: req.body
+      });
       
       res.status(500).json({
         status: 'ERROR',
@@ -150,9 +196,16 @@ module.exports = async (req, res) => {
   }
 };
 
-// Validation des données manifeste (inchangé mais avec logs améliorés)
+// Validation des données manifeste (améliorée avec logging)
 function validerDonneesManifeste(donnees) {
   const erreurs = [];
+
+  console.log('🔍 [Pays A] Validation manifeste:', {
+    hasData: !!donnees,
+    numeroManifeste: donnees?.numeroManifeste,
+    transporteur: donnees?.transporteur,
+    marchandisesCount: donnees?.marchandises?.length
+  });
 
   if (!donnees.numeroManifeste || donnees.numeroManifeste.trim() === '') {
     erreurs.push('Le numéro de manifeste est requis');
@@ -185,6 +238,8 @@ function validerDonneesManifeste(donnees) {
   // Log des erreurs de validation
   if (erreurs.length > 0) {
     console.log(`⚠️ [Pays A] Validation manifeste échouée:`, erreurs);
+  } else {
+    console.log(`✅ [Pays A] Validation manifeste réussie`);
   }
 
   return erreurs;
