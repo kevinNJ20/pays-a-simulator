@@ -13,9 +13,9 @@ module.exports = async (req, res) => {
 
   try {
     if (req.method === 'POST') {
-      console.log('🔓 [Pays A] Réception autorisation mainlevée depuis Kit:', req.body);
+      console.log('🔓 [Pays A] Réception autorisation mainlevée depuis Kit MuleSoft:', req.body);
       
-      // Extraire les données d'autorisation (le Kit peut envoyer dans autorisationMainlevee ou directement)
+      // ✅ CORRECTION: Extraire les données d'autorisation du Kit MuleSoft
       const donneesAutorisation = req.body.autorisationMainlevee || req.body;
       
       // Validation
@@ -48,11 +48,11 @@ module.exports = async (req, res) => {
         }
       });
 
-      console.log(`✅ [Pays A] Autorisation mainlevée acceptée: ${autorisation.id}`);
+      console.log(`✅ [Pays A] Autorisation mainlevée acceptée depuis Kit MuleSoft: ${autorisation.id}`);
       console.log(`💰 [Pays A] Montant acquitté: ${autorisation.montantAcquitte} FCFA`);
       console.log(`📋 [Pays A] Manifeste ${manifeste.id} -> Statut: ${manifeste.statut}`);
 
-      // Réponse de confirmation
+      // ✅ CORRECTION: Réponse adaptée pour MuleSoft
       const reponse = {
         status: 'ACCEPTED',
         message: 'Autorisation de mainlevée acceptée avec succès',
@@ -87,7 +87,8 @@ module.exports = async (req, res) => {
           horaires: 'Lundi-Vendredi 8h-17h'
         },
         
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        correlationId: req.headers['x-correlation-id']
       };
 
       res.status(200).json(reponse);
