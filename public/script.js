@@ -1,6 +1,8 @@
-// Configuration API
+// Configuration API - PAYS A CORRIGÉ
 const API_BASE = window.location.origin + '/api';
-const KIT_URL = 'https://kit-interconnexion-uemoa-v4320.m3jzw3-1.deu-c1.cloudhub.io';
+const KIT_MULESOFT_URL = 'https://kit-interconnexion-uemoa-v4320.m3jzw3-1.deu-c1.cloudhub.io/api/v1';
+window.SYSTEME_TYPE = 'PAYS_A';
+window.PAYS_CODE = 'CIV';
 
 let statusInterval;
 let refreshInterval;
@@ -8,7 +10,7 @@ let kitConnected = false;
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initialisation Pays A - Monitoring Kit MuleSoft');
+    console.log('🚀 Initialisation Pays A - Monitoring Kit MuleSoft avec Test Direct');
     
     // Définir la date par défaut
     document.getElementById('dateArrivee').value = new Date().toISOString().split('T')[0];
@@ -28,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ajouterInteraction('🏗️ Service démarré', 'Pays A opérationnel - Monitoring Kit activé');
 });
 
-// Vérification du statut Kit
+// Vérification du statut Kit (via API locale pour le monitoring continu)
 async function verifierStatutKit() {
     try {
         const response = await fetch(`${API_BASE}/health`);
@@ -68,51 +70,265 @@ async function verifierStatutKit() {
     }
 }
 
-// Test de connexion Kit
+// ✅ CORRECTION: Test de connexion Kit DIRECT vers MuleSoft
 async function testerConnexionKit() {
-    ajouterInteraction('🔧 Test connexion Kit', 'Test de connectivité démarré...');
+    ajouterInteraction('🔧 Test connexion Kit', 'Test connectivité directe vers Kit MuleSoft...');
+    
+    const startTime = Date.now();
+    
+    try {
+        // ✅ APPEL DIRECT vers le Kit MuleSoft
+        const response = await fetch(`${KIT_MULESOFT_URL}/health`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Source-System': 'PAYS_A_DASHBOARD',
+                'X-Source-Country': window.PAYS_CODE,
+                'User-Agent': 'PaysA-Dashboard/1.0'
+            },
+            signal: AbortSignal.timeout(10000) // 10 secondes timeout
+        });
+        
+        const latence = Date.now() - startTime;
+        
+        if (response.ok) {
+            const data = await response.json();
+            afficherNotification(`✅ Kit MuleSoft accessible - ${response.status} (${latence}ms)`, 'success');
+            ajouterInteraction('🔧 Test Kit Direct', `✅ Succès - Latence: ${latence}ms, Version: ${data.version || 'N/A'}`);
+            
+            // Log détaillé du Kit
+            console.log('📊 Réponse Kit MuleSoft:', data);
+            
+        } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+    } catch (error) {
+        const latence = Date.now() - startTime;
+        let messageErreur = 'Kit MuleSoft inaccessible';
+        
+        if (error.name === 'TimeoutError') {
+            messageErreur = 'Timeout - Kit MuleSoft ne répond pas (>10s)';
+        } else if (error.message.includes('CORS')) {
+            messageErreur = 'Erreur CORS - Configuration Kit à vérifier';
+        } else if (error.message.includes('Failed to fetch')) {
+            messageErreur = 'Erreur réseau - Kit MuleSoft inaccessible';
+        } else {
+            messageErreur = `Erreur: ${error.message}`;
+        }
+        
+        afficherNotification(`❌ ${messageErreur} (${latence}ms)`, 'error');
+        ajouterInteraction('🔧 Test Kit Direct', `❌ Échec - ${messageErreur}`);
+    }
+}
+
+// ✅ NOUVEAU: Test complet (Direct + Via API locale)
+async function testerConnexionKitComplet() {
+    ajouterInteraction('🔍 Test complet', 'Test connectivité Kit - Direct + Via API locale');
+    
+    // Test 1: Direct depuis le browser
+    console.log('🔍 Test 1: Connectivité directe browser → Kit MuleSoft');
+    const testDirect = await testerKitDirect();
+    
+    // Test 2: Via l'API locale 
+    console.log('🔍 Test 2: Connectivité via API locale → Kit MuleSoft');
+    const testViaAPI = await testerKitViaAPI();
+    
+    // Comparaison des résultats
+    const resultats = {
+        testDirect: {
+            accessible: testDirect.accessible,
+            latence: testDirect.latence,
+            source: 'Browser → Kit MuleSoft'
+        },
+        testViaAPI: {
+            accessible: testViaAPI.accessible,
+            latence: testViaAPI.latence,
+            source: 'API Locale → Kit MuleSoft'
+        },
+        coherent: testDirect.accessible === testViaAPI.accessible
+    };
+    
+    console.log('📊 Comparaison tests Kit:', resultats);
+    
+    const message = `Direct: ${testDirect.accessible ? '✅' : '❌'} (${testDirect.latence}ms) | ` +
+                   `API: ${testViaAPI.accessible ? '✅' : '❌'} (${testViaAPI.latence}ms)`;
+    
+    ajouterInteraction('🔍 Test complet', message);
+    
+    if (!resultats.coherent) {
+        afficherNotification('⚠️ Résultats incohérents entre test direct et API locale', 'warning');
+    } else {
+        afficherNotification('✅ Tests cohérents - Connectivité validée', 'success');
+    }
+    
+    return resultats;
+}
+
+// Test Kit direct (helper function)
+async function testerKitDirect() {
+    const startTime = Date.now();
+    
+    try {
+        const response = await fetch(`${KIT_MULESOFT_URL}/health`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Source-System': 'PAYS_A_DASHBOARD',
+                'X-Source-Country': window.PAYS_CODE
+            },
+            signal: AbortSignal.timeout(8000)
+        });
+        
+        const latence = Date.now() - startTime;
+        
+        return {
+            accessible: response.ok,
+            latence,
+            status: response.status
+        };
+        
+    } catch (error) {
+        return {
+            accessible: false,
+            latence: Date.now() - startTime,
+            erreur: error.message
+        };
+    }
+}
+
+// Test Kit via API locale (helper function)  
+async function testerKitViaAPI() {
+    const startTime = Date.now();
     
     try {
         const response = await fetch(`${API_BASE}/health`);
         const data = await response.json();
         
-        if (data.kit.accessible) {
-            afficherNotification(`✅ Kit accessible - Latence: ${data.kit.latence}ms`, 'success');
-            ajouterInteraction('🔧 Test Kit', `✅ Succès - Latence: ${data.kit.latence}ms`);
-        } else {
-            throw new Error('Kit inaccessible');
-        }
+        const latence = Date.now() - startTime;
+        
+        return {
+            accessible: data.kit?.accessible || false,
+            latence: data.kit?.latence || latence
+        };
         
     } catch (error) {
-        afficherNotification('❌ Kit inaccessible: ' + error.message, 'error');
-        ajouterInteraction('🔧 Test Kit', `❌ Échec: ${error.message}`);
+        return {
+            accessible: false,
+            latence: Date.now() - startTime,
+            erreur: error.message
+        };
     }
 }
 
-// Diagnostic complet
+// ✅ NOUVEAU: Diagnostic complet Kit MuleSoft
 async function lancerDiagnostic() {
-    ajouterInteraction('🩺 Diagnostic', 'Démarrage diagnostic complet...');
-    afficherNotification('🩺 Diagnostic en cours...', 'info');
+    ajouterInteraction('🩺 Diagnostic', 'Démarrage diagnostic complet Kit MuleSoft...');
+    afficherNotification('🩺 Diagnostic Kit en cours...', 'info');
     
-    // Simulation d'un diagnostic complet
-    setTimeout(() => {
-        const resultats = {
-            connectivite: kitConnected,
-            latence: kitConnected ? '< 1000ms' : 'N/A',
-            endpoints: kitConnected ? '3/3' : '0/3'
-        };
-        
-        ajouterInteraction('🩺 Diagnostic', 
-            `Connectivité: ${resultats.connectivite ? '✅' : '❌'}, ` +
-            `Latence: ${resultats.latence}, ` +
-            `Endpoints: ${resultats.endpoints}`
-        );
-        
-        afficherNotification('🩺 Diagnostic terminé', 'info');
-    }, 2000);
+    const diagnostic = {
+        timestamp: new Date().toISOString(),
+        systeme: window.SYSTEME_TYPE,
+        pays: window.PAYS_CODE,
+        tests: {}
+    };
+    
+    // Test 1: Health Check
+    console.log('🏥 Test Health Check...');
+    diagnostic.tests.health = await testerEndpointKit('/health', 'GET');
+    
+    // Test 2: Console Access
+    console.log('🖥️ Test Console Access...');
+    diagnostic.tests.console = await testerEndpointKit('/console', 'GET');
+    
+    // Test 3: Endpoint Transmission Manifeste (spécifique Pays A)
+    console.log('📋 Test endpoint transmission manifeste...');
+    diagnostic.tests.manifesteTransmission = await testerEndpointKit('/manifeste/transmission', 'POST', {
+        numeroManifeste: `TEST_${Date.now()}`,
+        transporteur: 'TEST CARRIER',
+        dateArrivee: new Date().toISOString().split('T')[0],
+        marchandises: [{
+            designation: 'Test diagnostic',
+            poidsBrut: 1000,
+            nombreColis: 1,
+            paysDestination: 'BFA'
+        }]
+    });
+    
+    // Résumé du diagnostic
+    const testsReussis = Object.values(diagnostic.tests).filter(t => t.accessible).length;
+    const totalTests = Object.keys(diagnostic.tests).length;
+    
+    diagnostic.resume = {
+        testsReussis,
+        totalTests,
+        tauxReussite: Math.round((testsReussis / totalTests) * 100),
+        kitOperationnel: testsReussis > 0
+    };
+    
+    console.log('📊 Diagnostic Kit terminé:', diagnostic.resume);
+    
+    const message = `Terminé - ${testsReussis}/${totalTests} tests réussis (${diagnostic.resume.tauxReussite}%)`;
+    ajouterInteraction('🩺 Diagnostic', message);
+    
+    if (diagnostic.resume.kitOperationnel) {
+        afficherNotification(`✅ Kit opérationnel - ${message}`, 'success');
+    } else {
+        afficherNotification(`❌ Kit défaillant - ${message}`, 'error');
+    }
+    
+    return diagnostic;
 }
 
-// Création de manifeste
+// Utilitaire pour tester un endpoint spécifique du Kit
+async function testerEndpointKit(endpoint, method = 'GET', testData = null) {
+    const startTime = Date.now();
+    
+    try {
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Source-System': 'PAYS_A_DASHBOARD',
+                'X-Source-Country': window.PAYS_CODE,
+                'X-Test-Type': 'DIAGNOSTIC'
+            },
+            signal: AbortSignal.timeout(5000)
+        };
+        
+        // Pour les tests POST, ajouter des données test
+        if (method === 'POST') {
+            options.body = JSON.stringify(testData || {
+                test: true,
+                timestamp: new Date().toISOString(),
+                source: 'PAYS_A_DIAGNOSTIC'
+            });
+        }
+        
+        const response = await fetch(`${KIT_MULESOFT_URL}${endpoint}`, options);
+        const latence = Date.now() - startTime;
+        
+        return {
+            accessible: response.ok,
+            status: response.status,
+            latence,
+            endpoint,
+            method
+        };
+        
+    } catch (error) {
+        return {
+            accessible: false,
+            status: 0,
+            latence: Date.now() - startTime,
+            endpoint,
+            method,
+            erreur: error.message
+        };
+    }
+}
+
+// Création de manifeste (reste inchangé)
 async function creerManifeste(event) {
     event.preventDefault();
     
@@ -184,7 +400,7 @@ async function creerManifeste(event) {
     }
 }
 
-// Charger toutes les données
+// Charger toutes les données (reste inchangé)
 async function chargerDonnees() {
     await Promise.all([
         chargerStatistiques(),
@@ -192,7 +408,7 @@ async function chargerDonnees() {
     ]);
 }
 
-// Charger statistiques
+// Charger statistiques (reste inchangé)
 async function chargerStatistiques() {
     try {
         const response = await fetch(`${API_BASE}/statistiques`);
@@ -214,7 +430,7 @@ async function chargerStatistiques() {
     }
 }
 
-// Charger manifestes
+// Charger manifestes (reste inchangé)
 async function chargerManifestes() {
     try {
         const response = await fetch(`${API_BASE}/manifeste/lister?limite=5`);
@@ -257,7 +473,7 @@ async function chargerManifestes() {
     }
 }
 
-// Ajouter interaction
+// Ajouter interaction (reste inchangé)
 function ajouterInteraction(title, details) {
     const container = document.getElementById('kit-interactions');
     const timestamp = new Date().toLocaleTimeString();
@@ -289,7 +505,7 @@ function ajouterInteraction(title, details) {
     }
 }
 
-// Notification
+// Notification (reste inchangé)
 function afficherNotification(message, type) {
     const notification = document.getElementById('notification');
     notification.textContent = message;
@@ -301,7 +517,7 @@ function afficherNotification(message, type) {
     }, 5000);
 }
 
-// Cleanup
+// Cleanup (reste inchangé)
 window.addEventListener('beforeunload', () => {
     if (statusInterval) clearInterval(statusInterval);
     if (refreshInterval) clearInterval(refreshInterval);
