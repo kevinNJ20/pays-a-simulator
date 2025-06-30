@@ -31,34 +31,48 @@ module.exports = async (req, res) => {
       const manifeste = database.creerManifeste(req.body);
       console.log(`✅ [Pays A] Manifeste créé localement: ${manifeste.id}`);
 
-      // Étape 2: Transmettre au Kit d'Interconnexion
+      // Étape 2: Transmettre DIRECTEMENT au Kit MuleSoft
       let transmissionReussie = false;
       let reponseKit = null;
       let erreurTransmission = null;
 
       try {
-        console.log(`🚀 [Pays A] Transmission vers Kit: ${manifeste.id}`);
+        console.log(`🚀 [Pays A] Transmission DIRECTE vers Kit MuleSoft: ${manifeste.id}`);
         
+        // ✅ CORRECTION: Appel direct vers MuleSoft via kit-client corrigé
         reponseKit = await kitClient.transmettreManifeste(manifeste);
         transmissionReussie = true;
         
-        console.log(`✅ [Pays A] Transmission Kit réussie: ${manifeste.id}`);
+        console.log(`✅ [Pays A] Transmission Kit MuleSoft réussie:`, {
+          manifesteId: manifeste.id,
+          kitResponse: reponseKit.status,
+          latence: reponseKit.latence,
+          correlationId: reponseKit.correlationId
+        });
         
       } catch (error) {
-        console.error(`❌ [Pays A] Erreur transmission Kit:`, error.message);
+        console.error(`❌ [Pays A] Erreur transmission Kit MuleSoft:`, {
+          manifesteId: manifeste.id,
+          erreur: error.message,
+          details: error.response?.data || error.cause
+        });
         erreurTransmission = error.message;
         transmissionReussie = false;
       }
 
       // Étape 3: Enregistrer le résultat de la transmission
-      database.enregistrerTransmissionKit(manifeste.id, reponseKit || { erreur: erreurTransmission }, transmissionReussie);
+      database.enregistrerTransmissionKit(
+        manifeste.id, 
+        reponseKit || { erreur: erreurTransmission }, 
+        transmissionReussie
+      );
 
       // Étape 4: Préparer la réponse
       const reponse = {
         status: transmissionReussie ? 'SUCCESS' : 'PARTIAL_SUCCESS',
         message: transmissionReussie 
-          ? 'Manifeste créé et transmis au Kit avec succès'
-          : 'Manifeste créé mais erreur de transmission au Kit',
+          ? 'Manifeste créé et transmis au Kit MuleSoft avec succès'
+          : 'Manifeste créé mais erreur de transmission au Kit MuleSoft',
         
         manifeste: {
           id: manifeste.id,
@@ -70,24 +84,37 @@ module.exports = async (req, res) => {
           dateCreation: manifeste.dateCreation
         },
         
+        // ✅ CORRECTION: Informations détaillées sur la transmission MuleSoft
         transmission: {
-          vers: 'Kit d\'Interconnexion UEMOA',
+          vers: 'Kit MuleSoft (Direct)',
+          urlKit: kitClient.baseURL,
           reussie: transmissionReussie,
           timestamp: new Date().toISOString(),
           latence: reponseKit?.latence || null,
-          ...(reponseKit && { reponseKit }),
-          ...(erreurTransmission && { erreur: erreurTransmission })
+          correlationId: reponseKit?.correlationId || null,
+          ...(reponseKit && { 
+            reponseKit: {
+              status: reponseKit.status,
+              message: reponseKit.message,
+              timestamp: reponseKit.timestamp
+            }
+          }),
+          ...(erreurTransmission && { 
+            erreur: erreurTransmission,
+            recommandation: 'Vérifiez la connectivité avec Kit MuleSoft'
+          })
         },
         
         prochainEtapes: transmissionReussie ? [
-          'Le manifeste a été routé vers le pays de destination',
-          'La Commission UEMOA a été notifiée',
+          'Le manifeste a été routé vers le pays de destination via Kit MuleSoft',
+          'La Commission UEMOA a été notifiée automatiquement',
           'Attente de traitement par le pays destinataire',
           'Vous recevrez une autorisation de mainlevée après paiement'
         ] : [
-          'Le manifeste est sauvegardé localement',
-          'Tentative de retransmission au Kit recommandée',
-          'Vérifiez la connectivité avec le Kit d\'Interconnexion'
+          'Le manifeste est sauvegardé localement dans le système Pays A',
+          'Tentative de retransmission vers Kit MuleSoft recommandée',
+          'Vérifiez la connectivité réseau et le statut du Kit',
+          'Contactez l\'administrateur si le problème persiste'
         ],
         
         timestamp: new Date().toISOString()
@@ -96,8 +123,13 @@ module.exports = async (req, res) => {
       const statusCode = transmissionReussie ? 200 : 206; // 206 = Partial Content
       res.status(statusCode).json(reponse);
 
-      // Log pour monitoring
-      console.log(`📊 [Pays A] Manifeste ${manifeste.id}: Local=✅, Kit=${transmissionReussie ? '✅' : '❌'}`);
+      // Log pour monitoring avec détails Kit
+      console.log(`📊 [Pays A] Résumé transmission manifeste ${manifeste.id}:`, {
+        local: '✅ SAUVEGARDE',
+        kitMulesoft: transmissionReussie ? '✅ TRANSMIS' : '❌ ECHEC',
+        latence: reponseKit?.latence || 'N/A',
+        destination: manifeste.marchandises?.[0]?.paysDestination
+      });
       
     } catch (error) {
       console.error('❌ [Pays A] Erreur création manifeste:', error);
@@ -106,6 +138,7 @@ module.exports = async (req, res) => {
         status: 'ERROR',
         message: 'Erreur interne lors de la création du manifeste',
         erreur: error.message,
+        recommandation: 'Vérifiez les logs serveur et la connectivité Kit MuleSoft',
         timestamp: new Date().toISOString()
       });
     }
@@ -117,7 +150,7 @@ module.exports = async (req, res) => {
   }
 };
 
-// Validation des données manifeste
+// Validation des données manifeste (inchangé mais avec logs améliorés)
 function validerDonneesManifeste(donnees) {
   const erreurs = [];
 
@@ -147,6 +180,11 @@ function validerDonneesManifeste(donnees) {
         erreurs.push(`Poids brut valide requis pour la marchandise ${index + 1}`);
       }
     });
+  }
+
+  // Log des erreurs de validation
+  if (erreurs.length > 0) {
+    console.log(`⚠️ [Pays A] Validation manifeste échouée:`, erreurs);
   }
 
   return erreurs;
