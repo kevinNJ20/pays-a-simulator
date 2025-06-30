@@ -1,6 +1,6 @@
 // ============================================================================
-// PAYS A - Script Frontend CORRIGÉ avec Tests Hybrides
-// Fichier: public/script.js
+// PAYS A - Script Frontend COMPLET CORRIGÉ - Toutes erreurs latence fixées
+// Fichier: public/script.js - VERSION COMPLÈTE À COPIER-COLLER
 // ============================================================================
 
 // Configuration API - PAYS A CORRIGÉ
@@ -15,33 +15,45 @@ let kitConnected = false;
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initialisation Pays A - Monitoring Kit MuleSoft avec Tests Hybrides');
+    console.log('🚀 Initialisation Pays A - Version erreurs corrigées');
     
     // Définir la date par défaut
-    document.getElementById('dateArrivee').value = new Date().toISOString().split('T')[0];
-    document.getElementById('init-time').textContent = new Date().toLocaleTimeString();
+    const dateElement = document.getElementById('dateArrivee');
+    if (dateElement) {
+        dateElement.value = new Date().toISOString().split('T')[0];
+    }
+    
+    const initTimeElement = document.getElementById('init-time');
+    if (initTimeElement) {
+        initTimeElement.textContent = new Date().toLocaleTimeString();
+    }
     
     // Vérifications périodiques
     verifierStatutKit();
-    statusInterval = setInterval(verifierStatutKit, 15000);
+    statusInterval = setInterval(verifierStatutKit, 30000);
     
     // Actualisation données
     chargerDonnees();
-    refreshInterval = setInterval(chargerDonnees, 10000);
+    refreshInterval = setInterval(chargerDonnees, 5000);
     
     // Gestionnaire de formulaire
-    document.getElementById('manifeste-form').addEventListener('submit', creerManifeste);
+    const form = document.getElementById('manifeste-form');
+    if (form) {
+        form.addEventListener('submit', creerManifeste);
+    }
     
-    ajouterInteraction('🏗️ Service démarré', 'Pays A opérationnel - Monitoring Kit activé');
+    ajouterInteraction('🏗️ Service démarré', 'Pays A opérationnel - Version corrigée');
 });
 
-// Vérification du statut Kit (via API locale pour le monitoring continu)
+// Vérification du statut Kit
 async function verifierStatutKit() {
     try {
-        const response = await fetch(`${API_BASE}/health`);
+        const response = await fetch(`${API_BASE}/health`, {
+            signal: AbortSignal.timeout(5000)
+        });
         const data = await response.json();
         
-        const kitInfo = data.kit;
+        const kitInfo = data.kit || {};
         const banner = document.getElementById('kit-banner');
         const indicator = document.getElementById('kit-indicator');
         const statusText = document.getElementById('kit-status-text');
@@ -49,253 +61,79 @@ async function verifierStatutKit() {
         
         if (kitInfo.accessible) {
             // Kit connecté
-            banner.className = 'kit-status-banner connected';
-            banner.innerHTML = `✅ Kit d'Interconnexion opérationnel - ${kitInfo.status} (${kitInfo.latence}ms)`;
+            if (banner) {
+                banner.className = 'kit-status-banner connected';
+                banner.innerHTML = `✅ Kit d'Interconnexion opérationnel - ${kitInfo.status || 'UP'} (${kitInfo.latence || 'N/A'}ms)`;
+            }
             
-            indicator.className = 'status-indicator connected';
-            statusText.textContent = 'Kit Opérationnel';
-            details.textContent = `Latence: ${kitInfo.latence}ms`;
+            if (indicator) indicator.className = 'status-indicator connected';
+            if (statusText) statusText.textContent = 'Kit Opérationnel';
+            if (details) details.textContent = `Latence: ${kitInfo.latence || 'N/A'}ms`;
             
             kitConnected = true;
         } else {
             // Kit déconnecté
-            banner.className = 'kit-status-banner disconnected';
-            banner.innerHTML = `❌ Kit d'Interconnexion inaccessible - Vérifiez la connectivité`;
+            if (banner) {
+                banner.className = 'kit-status-banner disconnected';
+                banner.innerHTML = `⚠️ Kit d'Interconnexion inaccessible - Service local opérationnel`;
+            }
             
-            indicator.className = 'status-indicator';
-            statusText.textContent = 'Kit Inaccessible';
-            details.textContent = 'Erreur de connexion';
+            if (indicator) indicator.className = 'status-indicator';
+            if (statusText) statusText.textContent = 'Kit Inaccessible';
+            if (details) details.textContent = 'Mode local uniquement';
             
             kitConnected = false;
         }
         
     } catch (error) {
         console.error('Erreur vérification Kit:', error);
+        const banner = document.getElementById('kit-banner');
+        if (banner) {
+            banner.className = 'kit-status-banner disconnected';
+            banner.innerHTML = `⚠️ Impossible de vérifier le Kit - Service local actif`;
+        }
         kitConnected = false;
     }
 }
 
-// ✅ CORRECTION MAJEURE: Test de connexion Kit HYBRIDE (Direct + Proxy)
-async function testerConnexionKit() {
-    ajouterInteraction('🔧 Test connexion Kit', 'Test hybride: Direct + Proxy serveur...');
-    afficherNotification('🔧 Test Kit en cours (Direct + Proxy)...', 'info');
-    
-    const resultats = {
-        testDirect: null,
-        testProxy: null,
-        recommendation: ''
-    };
-    
-    // === TEST 1: DIRECT vers MuleSoft (pour diagnostiquer CORS) ===
-    console.log('🔍 Test 1: Browser → Kit MuleSoft (Direct)');
-    try {
-        const startTime = Date.now();
-        const response = await fetch(`${KIT_MULESOFT_URL}/health`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Source-System': 'PAYS_A_DASHBOARD',
-                'X-Source-Country': window.PAYS_CODE,
-                'User-Agent': 'PaysA-Dashboard/1.0'
-            },
-            signal: AbortSignal.timeout(8000)
-        });
-        
-        const latence = Date.now() - startTime;
-        
-        if (response.ok) {
-            const data = await response.json();
-            resultats.testDirect = {
-                success: true,
-                latence,
-                status: response.status,
-                version: data.version || 'N/A',
-                methode: 'DIRECT_BROWSER'
-            };
-            console.log('✅ Test Direct réussi:', resultats.testDirect);
-        } else {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-    } catch (error) {
-        resultats.testDirect = {
-            success: false,
-            latence: 0,
-            erreur: error.message,
-            methode: 'DIRECT_BROWSER'
-        };
-        console.log('❌ Test Direct échoué:', resultats.testDirect);
-    }
-    
-    // === TEST 2: VIA PROXY SERVEUR ===
-    console.log('🔍 Test 2: Browser → API Locale → Kit MuleSoft (Proxy)');
-    try {
-        const startTime = Date.now();
-        const response = await fetch(`${API_BASE}/kit/test?type=health`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            signal: AbortSignal.timeout(15000) // Plus de temps pour le proxy
-        });
-        
-        const latence = Date.now() - startTime;
-        const data = await response.json();
-        
-        if (response.ok && data.status === 'SUCCESS') {
-            resultats.testProxy = {
-                success: true,
-                latence,
-                latenceKit: data.resultat?.latence || 0,
-                version: data.resultat?.version || 'N/A',
-                methode: 'PROXY_SERVEUR'
-            };
-            console.log('✅ Test Proxy réussi:', resultats.testProxy);
-        } else {
-            throw new Error(data.message || 'Erreur proxy');
-        }
-        
-    } catch (error) {
-        resultats.testProxy = {
-            success: false,
-            latence: 0,
-            erreur: error.message,
-            methode: 'PROXY_SERVEUR'
-        };
-        console.log('❌ Test Proxy échoué:', resultats.testProxy);
-    }
-    
-    // === ANALYSE DES RÉSULTATS ===
-    if (resultats.testDirect.success && resultats.testProxy.success) {
-        resultats.recommendation = 'Les deux méthodes fonctionnent - CORS autorisé';
-        afficherNotification(`✅ Kit accessible - Direct: ${resultats.testDirect.latence}ms | Proxy: ${resultats.testProxy.latence}ms`, 'success');
-        ajouterInteraction('🔧 Test Kit', `✅ Succès complet - Direct: ${resultats.testDirect.latence}ms, Proxy: ${resultats.testProxy.latence}ms`);
-        kitConnected = true;
-    } else if (!resultats.testDirect.success && resultats.testProxy.success) {
-        resultats.recommendation = 'Seul le proxy fonctionne - CORS bloqué par navigateur';
-        afficherNotification(`⚠️ Kit accessible via proxy uniquement (${resultats.testProxy.latence}ms) - CORS bloqué`, 'warning');
-        ajouterInteraction('🔧 Test Kit', `⚠️ Proxy OK (${resultats.testProxy.latence}ms) - Direct bloqué: ${resultats.testDirect.erreur}`);
-        kitConnected = true; // Via proxy
-    } else if (resultats.testDirect.success && !resultats.testProxy.success) {
-        resultats.recommendation = 'Direct OK mais proxy KO - Problème configuration serveur';
-        afficherNotification(`⚠️ Kit accessible direct uniquement (${resultats.testDirect.latence}ms) - Proxy défaillant`, 'warning');
-        ajouterInteraction('🔧 Test Kit', `⚠️ Direct OK (${resultats.testDirect.latence}ms) - Proxy KO: ${resultats.testProxy.erreur}`);
-        kitConnected = true; // Via direct
-    } else {
-        resultats.recommendation = 'Kit MuleSoft complètement inaccessible';
-        afficherNotification('❌ Kit MuleSoft inaccessible par toutes les méthodes', 'error');
-        ajouterInteraction('🔧 Test Kit', `❌ Échec total - Direct: ${resultats.testDirect.erreur}, Proxy: ${resultats.testProxy.erreur}`);
-        kitConnected = false;
-    }
-    
-    console.log('📊 Résultat final du test hybride:', resultats);
-    return resultats;
-}
-
-// ✅ NOUVEAU: Diagnostic complet Kit MuleSoft avec tests hybrides
-async function lancerDiagnostic() {
-    ajouterInteraction('🩺 Diagnostic', 'Démarrage diagnostic complet Kit MuleSoft...');
-    afficherNotification('🩺 Diagnostic Kit en cours...', 'info');
-    
-    try {
-        // Utiliser le proxy serveur pour le diagnostic (plus fiable)
-        const response = await fetch(`${API_BASE}/kit/test?type=diagnostic`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            signal: AbortSignal.timeout(30000) // 30 secondes pour diagnostic complet
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.status === 'SUCCESS') {
-            const diagnostic = data.resultat;
-            const testsReussis = Object.values(diagnostic.tests || {}).filter(t => t.success).length;
-            const totalTests = Object.keys(diagnostic.tests || {}).length;
-            
-            const message = `Terminé - ${testsReussis}/${totalTests} tests réussis`;
-            ajouterInteraction('🩺 Diagnostic', message);
-            
-            if (testsReussis > 0) {
-                afficherNotification(`✅ Kit opérationnel - ${message}`, 'success');
-            } else {
-                afficherNotification(`❌ Kit défaillant - ${message}`, 'error');
-            }
-            
-            console.log('📊 Diagnostic Kit complet:', diagnostic);
-        } else {
-            throw new Error(data.message || 'Diagnostic échoué');
-        }
-        
-    } catch (error) {
-        ajouterInteraction('🩺 Diagnostic', `❌ Erreur - ${error.message}`);
-        afficherNotification('❌ Diagnostic Kit échoué', 'error');
-        console.error('Erreur diagnostic:', error);
-    }
-}
-
-// ✅ NOUVEAU: Test avancé - Transmission manifeste vers Kit
-async function testerTransmissionKit() {
-    ajouterInteraction('📦 Test transmission', 'Test envoi manifeste vers Kit...');
-    
-    try {
-        const response = await fetch(`${API_BASE}/kit/test`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'transmission_test',
-                payload: {}
-            }),
-            signal: AbortSignal.timeout(15000)
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.status === 'SUCCESS') {
-            afficherNotification('✅ Test transmission manifeste réussi', 'success');
-            ajouterInteraction('📦 Test transmission', `✅ Succès - Latence: ${data.resultat?.latence || 'N/A'}ms`);
-        } else {
-            throw new Error(data.message || 'Test transmission échoué');
-        }
-        
-    } catch (error) {
-        afficherNotification('❌ Test transmission échoué: ' + error.message, 'error');
-        ajouterInteraction('📦 Test transmission', `❌ Échec - ${error.message}`);
-    }
-}
-
-// Création de manifeste (reste inchangé mais avec gestion d'erreur améliorée)
+// ✅ CORRECTION PRINCIPALE : Création de manifeste avec accès sécurisé aux propriétés
 async function creerManifeste(event) {
     event.preventDefault();
     
     const submitBtn = document.getElementById('btn-submit');
+    if (!submitBtn) return;
+    
     const originalText = submitBtn.innerHTML;
     
     // Disable button et show loading
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<div class="loading"></div> Transmission en cours...';
     
+    // ✅ Collecte sécurisée des données du formulaire
+    const getElementValue = (id) => {
+        const element = document.getElementById(id);
+        return element ? element.value : '';
+    };
+    
     const manifeste = {
-        numeroManifeste: document.getElementById('numeroManifeste').value,
-        transporteur: document.getElementById('transporteur').value,
-        navire: document.getElementById('navire').value,
-        portEmbarquement: document.getElementById('portEmbarquement').value,
-        portDebarquement: document.getElementById('portDebarquement').value,
-        dateArrivee: document.getElementById('dateArrivee').value,
+        numeroManifeste: getElementValue('numeroManifeste'),
+        transporteur: getElementValue('transporteur'),
+        navire: getElementValue('navire'),
+        portEmbarquement: getElementValue('portEmbarquement'),
+        portDebarquement: getElementValue('portDebarquement'),
+        dateArrivee: getElementValue('dateArrivee'),
         marchandises: [{
-            codeSH: document.getElementById('codeSH').value,
-            designation: document.getElementById('designation').value,
-            poidsBrut: parseFloat(document.getElementById('poidsBrut').value),
-            nombreColis: parseInt(document.getElementById('nombreColis').value),
-            destinataire: document.getElementById('destinataire').value,
-            paysDestination: document.getElementById('paysDestination').value
+            codeSH: getElementValue('codeSH'),
+            designation: getElementValue('designation'),
+            poidsBrut: parseFloat(getElementValue('poidsBrut')) || 0,
+            nombreColis: parseInt(getElementValue('nombreColis')) || 1,
+            destinataire: getElementValue('destinataire'),
+            paysDestination: getElementValue('paysDestination')
         }]
     };
     
-    ajouterInteraction('📋 Création manifeste', `${manifeste.numeroManifeste} vers ${manifeste.marchandises[0].paysDestination}`);
+    console.log('📋 Création manifeste:', manifeste.numeroManifeste);
+    ajouterInteraction('📋 Création manifeste', `${manifeste.numeroManifeste} vers ${manifeste.marchandises[0]?.paysDestination || 'DEST'}`);
     
     try {
         const response = await fetch(`${API_BASE}/manifeste/creer`, {
@@ -303,104 +141,187 @@ async function creerManifeste(event) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(manifeste)
+            body: JSON.stringify(manifeste),
+            signal: AbortSignal.timeout(60000)
         });
         
-        const result = await response.json();
-        
-        if (result.status === 'SUCCESS') {
-            afficherNotification('✅ Manifeste créé et transmis au Kit avec succès!', 'success');
-            ajouterInteraction('🚀 Transmission Kit', 
-                `✅ Succès - ${result.manifeste.id} (${result.transmission.latence}ms)`);
-            
-            // Reset form
-            document.getElementById('manifeste-form').reset();
-            document.getElementById('dateArrivee').value = new Date().toISOString().split('T')[0];
-            
-        } else if (result.status === 'PARTIAL_SUCCESS') {
-            afficherNotification('⚠️ Manifeste créé mais erreur transmission Kit', 'error');
-            ajouterInteraction('🚀 Transmission Kit', 
-                `❌ Échec - ${result.transmission.erreur}`);
-        } else {
-            throw new Error(result.message);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        // Actualiser les données
-        setTimeout(chargerDonnees, 1000);
+        const result = await response.json();
+        console.log('📋 Résultat création:', result.status, result.message);
+        
+        // ✅ CORRECTION : Accès sécurisé à toutes les propriétés
+        if (result.status === 'SUCCESS') {
+            afficherNotification('✅ Manifeste créé et transmis au Kit avec succès!', 'success');
+            
+            // ✅ Gestion ultra-sécurisée de la latence
+            const latence = result.transmission?.latence || 
+                          result.transmissionKit?.succes?.latence || 
+                          result.transmission?.duree || 'N/A';
+            const manifesteId = result.manifeste?.id || 
+                              result.manifeste?.numeroManifeste || 'ID inconnu';
+            
+            ajouterInteraction('🚀 Transmission Kit', 
+                `✅ Succès - ${manifesteId} (${latence}ms)`);
+            
+            // Reset form
+            resetForm();
+            
+        } else if (result.status === 'PARTIAL_SUCCESS') {
+            afficherNotification('⚠️ Manifeste créé localement mais erreur transmission Kit', 'warning');
+            
+            // ✅ Gestion ultra-sécurisée des erreurs
+            const erreur = result.transmission?.erreur || 
+                          result.transmissionKit?.echec?.erreur || 
+                          result.erreur || 'Erreur inconnue';
+            
+            ajouterInteraction('🚀 Transmission Kit', `⚠️ Partiel - ${erreur}`);
+        } else {
+            throw new Error(result.message || 'Erreur inconnue');
+        }
+        
+        // ✅ Actualisation forcée
+        console.log('🔄 Actualisation forcée des statistiques...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await chargerStatistiques();
+        await chargerManifestes();
+        
+        console.log('✅ Actualisation terminée');
         
     } catch (error) {
-        console.error('Erreur création manifeste:', error);
+        console.error('❌ Erreur création manifeste:', error);
         afficherNotification('❌ Erreur: ' + error.message, 'error');
         ajouterInteraction('📋 Création manifeste', `❌ Erreur: ${error.message}`);
     } finally {
-        // Restore button
+        // ✅ Restore button
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
     }
 }
 
-// ===============================
-// FONCTIONS UTILITAIRES (inchangées)
-// ===============================
-
-// Charger toutes les données
-async function chargerDonnees() {
-    await Promise.all([
-        chargerStatistiques(),
-        chargerManifestes()
-    ]);
-}
-
-// Charger statistiques
-async function chargerStatistiques() {
-    try {
-        const response = await fetch(`${API_BASE}/statistiques`);
-        const data = await response.json();
-        
-        if (data.status === 'SUCCESS') {
-            const stats = data.statistiques;
-            
-            document.getElementById('stat-manifestes').textContent = stats.manifestesCreees;
-            document.getElementById('stat-transmissions').textContent = stats.transmissionsKit;
-            document.getElementById('stat-succes').textContent = stats.transmissionsReussies;
-            document.getElementById('taux-reussite').textContent = stats.tauxReussiteTransmission + '%';
-            document.getElementById('latence-moyenne').textContent = 
-                stats.performance?.latenceMoyenne > 0 ? stats.performance.latenceMoyenne + ' ms' : '-- ms';
+// ✅ Fonction helper pour reset form
+function resetForm() {
+    const form = document.getElementById('manifeste-form');
+    if (form) {
+        form.reset();
+        const dateElement = document.getElementById('dateArrivee');
+        if (dateElement) {
+            dateElement.value = new Date().toISOString().split('T')[0];
         }
-        
-    } catch (error) {
-        console.error('Erreur chargement statistiques:', error);
     }
 }
 
-// Charger manifestes
+// ✅ CORRECTION : Chargement statistiques sécurisé
+async function chargerStatistiques() {
+    try {
+        console.log('📊 Chargement statistiques...');
+        
+        const response = await fetch(`${API_BASE}/statistiques`, {
+            signal: AbortSignal.timeout(8000)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('📊 Réponse statistiques:', data.status, data.statistiques);
+        
+        // ✅ CORRECTION : Traiter tous les statuts avec accès sécurisé
+        if (data.statistiques && ['SUCCESS', 'PARTIAL', 'DEGRADED'].includes(data.status)) {
+            const stats = data.statistiques;
+            
+            // ✅ Fonction helper sécurisée
+            const updateElement = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value || '0';
+                    element.style.color = ''; // Reset color
+                }
+            };
+            
+            updateElement('stat-manifestes', stats.manifestesCreees);
+            updateElement('stat-transmissions', stats.transmissionsKit);
+            updateElement('stat-succes', stats.transmissionsReussies);
+            updateElement('taux-reussite', (stats.tauxReussiteTransmission || 100) + '%');
+            
+            // ✅ CORRECTION CRITIQUE : Gestion ultra-sécurisée de la latence moyenne
+            const latenceMoyenne = (stats.performance?.latenceMoyenne || 0);
+            updateElement('latence-moyenne', latenceMoyenne > 0 ? latenceMoyenne + ' ms' : '-- ms');
+            
+            console.log('✅ Statistiques mises à jour:', {
+                manifestes: stats.manifestesCreees,
+                transmissions: stats.transmissionsKit,
+                succes: stats.transmissionsReussies,
+                taux: stats.tauxReussiteTransmission
+            });
+            
+            // ✅ Mettre à jour le statut Kit
+            if (data.kit) {
+                kitConnected = data.kit.accessible || false;
+            }
+            
+        } else {
+            console.warn('⚠️ Statistiques non disponibles, statut:', data.status);
+            if (data.erreur) {
+                console.error('Erreur serveur:', data.erreur);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement statistiques:', error);
+        
+        // ✅ Afficher indicateur d'erreur
+        const elements = ['stat-manifestes', 'stat-transmissions', 'stat-succes'];
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element && element.textContent === '0') {
+                element.textContent = '--';
+                element.style.color = '#ffc107';
+            }
+        });
+    }
+}
+
+// ✅ Chargement manifestes sécurisé
 async function chargerManifestes() {
     try {
-        const response = await fetch(`${API_BASE}/manifeste/lister?limite=5`);
-        const data = await response.json();
+        const response = await fetch(`${API_BASE}/manifeste/lister?limite=5`, {
+            signal: AbortSignal.timeout(5000)
+        });
         
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
         const container = document.getElementById('manifestes-list');
         
-        if (data.status === 'SUCCESS' && data.manifestes.length > 0) {
+        if (!container) return;
+        
+        if (data.status === 'SUCCESS' && data.manifestes && data.manifestes.length > 0) {
             container.innerHTML = data.manifestes.map(manifeste => {
-                const transmissionClass = manifeste.transmission?.reussie ? 'transmitted' : 
-                                         manifeste.transmission?.statut === 'ERREUR' ? 'error' : '';
+                const transmission = manifeste.transmission || {};
+                const transmissionClass = transmission.reussie ? 'transmitted' : 
+                                         transmission.statut === 'ERREUR' ? 'error' : '';
                 
-                const statusBadge = manifeste.transmission?.reussie ? 
+                const statusBadge = transmission.reussie ? 
                     '<span class="transmission-status success">✅ Transmis Kit</span>' :
-                    manifeste.transmission?.statut === 'ERREUR' ? 
+                    transmission.statut === 'ERREUR' ? 
                     '<span class="transmission-status error">❌ Erreur Kit</span>' :
                     '<span class="transmission-status pending">⏳ En attente</span>';
                 
                 return `
                     <div class="manifeste-item ${transmissionClass}">
                         <div class="manifeste-header">
-                            ${manifeste.numeroManifeste} - ${manifeste.transporteur}
+                            ${manifeste.numeroManifeste || 'N/A'} - ${manifeste.transporteur || 'N/A'}
                         </div>
                         <div class="manifeste-details">
-                            📍 ${manifeste.ports.embarquement} → ${manifeste.ports.debarquement}<br>
-                            📦 ${manifeste.marchandises.nombre} marchandise(s) → ${manifeste.marchandises.paysDestinations.join(', ')}<br>
-                            📅 ${new Date(manifeste.dateCreation).toLocaleString('fr-FR')}<br>
+                            📍 ${manifeste.ports?.embarquement || 'N/A'} → ${manifeste.ports?.debarquement || 'N/A'}<br>
+                            📦 ${manifeste.marchandises?.nombre || 0} marchandise(s) → ${(manifeste.marchandises?.paysDestinations || []).join(', ')}<br>
+                            📅 ${manifeste.dateCreation ? new Date(manifeste.dateCreation).toLocaleString('fr-FR') : 'N/A'}<br>
                             ${statusBadge}
                         </div>
                     </div>
@@ -411,53 +332,160 @@ async function chargerManifestes() {
         }
         
     } catch (error) {
-        console.error('Erreur chargement manifestes:', error);
-        document.getElementById('manifestes-list').innerHTML = '<p>Erreur de chargement</p>';
+        console.error('❌ Erreur chargement manifestes:', error);
+        const container = document.getElementById('manifestes-list');
+        if (container) {
+            container.innerHTML = '<p style="color: #ffc107;">⚠️ Erreur de chargement des manifestes</p>';
+        }
     }
 }
 
-// Ajouter interaction
+// Test de connexion Kit
+async function testerConnexionKit() {
+    ajouterInteraction('🔧 Test connexion Kit', 'Test de connectivité...');
+    afficherNotification('🔧 Test Kit en cours...', 'info');
+    
+    try {
+        const response = await fetch(`${API_BASE}/health`, {
+            signal: AbortSignal.timeout(10000)
+        });
+        
+        const data = await response.json();
+        
+        if (data.kit && data.kit.accessible) {
+            const latence = data.kit.latence || 'N/A';
+            afficherNotification(`✅ Kit accessible (${latence}ms)`, 'success');
+            ajouterInteraction('🔧 Test Kit', `✅ Succès - Latence: ${latence}ms`);
+            return true;
+        } else {
+            throw new Error(data.kit?.erreur || 'Kit inaccessible');
+        }
+        
+    } catch (error) {
+        console.error('❌ Test Kit échoué:', error);
+        afficherNotification('❌ Kit inaccessible: ' + error.message, 'error');
+        ajouterInteraction('🔧 Test Kit', `❌ Échec: ${error.message}`);
+        return false;
+    }
+}
+
+// Diagnostic complet
+async function lancerDiagnostic() {
+    ajouterInteraction('🩺 Diagnostic', 'Démarrage diagnostic...');
+    afficherNotification('🩺 Diagnostic en cours...', 'info');
+    
+    const resultats = {
+        serviceLocal: false,
+        kitMulesoft: false,
+        baseDonnees: false
+    };
+    
+    try {
+        // Test service local
+        const healthResponse = await fetch(`${API_BASE}/health`, {
+            signal: AbortSignal.timeout(5000)
+        });
+        resultats.serviceLocal = healthResponse.ok;
+        
+        // Test base de données via statistiques
+        const statsResponse = await fetch(`${API_BASE}/statistiques`, {
+            signal: AbortSignal.timeout(5000)
+        });
+        const statsData = await statsResponse.json();
+        resultats.baseDonnees = !!statsData.statistiques;
+        
+        // Test Kit MuleSoft
+        if (healthResponse.ok) {
+            const healthData = await healthResponse.json();
+            resultats.kitMulesoft = healthData.kit?.accessible || false;
+        }
+        
+        const testsReussis = Object.values(resultats).filter(Boolean).length;
+        const totalTests = Object.keys(resultats).length;
+        
+        const message = `Terminé - ${testsReussis}/${totalTests} composants opérationnels`;
+        ajouterInteraction('🩺 Diagnostic', message);
+        
+        if (testsReussis >= 2) {
+            afficherNotification(`✅ Système fonctionnel - ${message}`, 'success');
+        } else {
+            afficherNotification(`⚠️ Problèmes détectés - ${message}`, 'warning');
+        }
+        
+    } catch (error) {
+        ajouterInteraction('🩺 Diagnostic', `❌ Erreur - ${error.message}`);
+        afficherNotification('❌ Diagnostic échoué', 'error');
+    }
+}
+
+// Charger toutes les données
+async function chargerDonnees() {
+    try {
+        const promises = [
+            chargerStatistiques().catch(err => console.warn('Erreur stats:', err)),
+            chargerManifestes().catch(err => console.warn('Erreur manifestes:', err))
+        ];
+        
+        await Promise.allSettled(promises);
+    } catch (error) {
+        console.error('Erreur chargement données:', error);
+    }
+}
+
+// ✅ CORRECTION : Ajouter interaction ultra-sécurisé
 function ajouterInteraction(title, details) {
     const container = document.getElementById('kit-interactions');
+    if (!container) return;
+    
     const timestamp = new Date().toLocaleTimeString();
+    
+    // ✅ Nettoyage sécurisé des paramètres
+    const safeTitle = (title || 'Action').toString();
+    const safeDetails = (details || 'Détails non disponibles').toString();
     
     const item = document.createElement('div');
     item.className = 'interaction-item';
     
     // Déterminer la classe selon le contenu
-    if (details.includes('❌') || details.includes('Erreur') || details.includes('Échec')) {
+    if (safeDetails.includes('❌') || safeDetails.includes('Erreur') || safeDetails.includes('Échec')) {
         item.classList.add('error');
-    } else if (details.includes('⚠️') || details.includes('Partiel')) {
+    } else if (safeDetails.includes('⚠️') || safeDetails.includes('Partiel')) {
         item.classList.add('warning');
     }
     
     item.innerHTML = `
         <div class="interaction-header">
-            <div class="interaction-title">${title}</div>
+            <div class="interaction-title">${safeTitle}</div>
             <div class="interaction-time">${timestamp}</div>
         </div>
-        <div>${details}</div>
+        <div>${safeDetails}</div>
     `;
     
     container.prepend(item);
     
-    // Garder seulement les 20 dernières interactions
+    // Garder seulement les 15 dernières interactions
     const items = container.querySelectorAll('.interaction-item');
-    if (items.length > 20) {
-        items[items.length - 1].remove();
+    if (items.length > 15) {
+        for (let i = 15; i < items.length; i++) {
+            items[i].remove();
+        }
     }
 }
 
-// Notification
+// Notification sécurisée
 function afficherNotification(message, type) {
     const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.className = `notification ${type}`;
+    if (!notification) return;
+    
+    notification.textContent = message || 'Notification';
+    notification.className = `notification ${type || 'info'}`;
     notification.classList.add('show');
+    
+    const duration = type === 'error' ? 7000 : type === 'warning' ? 5000 : 3000;
     
     setTimeout(() => {
         notification.classList.remove('show');
-    }, 5000);
+    }, duration);
 }
 
 // Fonctions publiques pour les boutons HTML
@@ -465,10 +493,18 @@ window.chargerStatistiques = chargerStatistiques;
 window.chargerManifestes = chargerManifestes;
 window.testerConnexionKit = testerConnexionKit;
 window.lancerDiagnostic = lancerDiagnostic;
-window.testerTransmissionKit = testerTransmissionKit;
+window.chargerDonnees = chargerDonnees;
 
 // Cleanup
 window.addEventListener('beforeunload', () => {
     if (statusInterval) clearInterval(statusInterval);
     if (refreshInterval) clearInterval(refreshInterval);
 });
+
+// Gestion des erreurs globales
+window.addEventListener('error', (event) => {
+    console.error('Erreur globale:', event.error);
+    ajouterInteraction('⚠️ Erreur système', event.error?.message || 'Erreur inconnue');
+});
+
+console.log('✅ Script Pays A COMPLET initialisé - Toutes erreurs latence corrigées');

@@ -13,106 +13,102 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
+    let manifeste = null;
+    let transmissionKitReussie = false;
+    let reponseKit = null;
+    
     try {
-      console.log('📋 [Pays A] Nouvelle demande création manifeste:', req.body?.numeroManifeste);
-      console.log('📋 [Pays A] Données reçues:', JSON.stringify(req.body, null, 2));
+      console.log('\n🎯 [PAYS A] ═══════════════════════════════════════════════════════');
+      console.log('🎯 [PAYS A] DÉBUT CRÉATION MANIFESTE AVEC FOCUS KIT MULESOFT');
+      console.log('🎯 [PAYS A] ═══════════════════════════════════════════════════════');
+      console.log('📋 [PAYS A] Données reçues:', JSON.stringify(req.body, null, 2));
 
-      // Validation des données
+      // ✅ ÉTAPE 1: Validation STRICTE des données
       const erreurs = validerDonneesManifeste(req.body);
       if (erreurs.length > 0) {
-        console.error('❌ [Pays A] Validation échouée:', erreurs);
+        console.error('❌ [PAYS A] Validation échouée - ARRÊT:', erreurs);
         return res.status(400).json({
           status: 'ERROR',
-          message: 'Données manifeste invalides',
+          message: 'Validation échouée - données manifeste invalides',
           erreurs,
           timestamp: new Date().toISOString()
         });
       }
 
-      // Étape 1: Créer le manifeste localement TOUJOURS
-      const manifeste = database.creerManifeste(req.body);
-      console.log(`✅ [Pays A] Manifeste créé localement: ${manifeste.id}`);
-      console.log(`📊 [Pays A] Manifeste créé:`, JSON.stringify(manifeste, null, 2));
+      // ✅ ÉTAPE 2: Création manifeste LOCAL (sauvegarde prioritaire)
+      console.log('💾 [PAYS A] Création manifeste en base locale...');
+      manifeste = database.creerManifeste(req.body);
+      console.log(`✅ [PAYS A] Manifeste ${manifeste.id} créé localement - SAUVEGARDÉ`);
 
-      // Étape 2: Transmettre DIRECTEMENT au Kit MuleSoft
-      let transmissionReussie = false;
-      let reponseKit = null;
-      let erreurTransmission = null;
-
+      // ✅ ÉTAPE 3: TRANSMISSION CRITIQUE vers Kit MuleSoft
+      console.log('\n🚀 [PAYS A] ═══ TRANSMISSION VERS KIT MULESOFT ═══');
+      console.log(`🎯 [PAYS A] OBJECTIF: Kit MuleSoft doit recevoir le manifeste pour insertion Supabase`);
+      console.log(`📋 [PAYS A] Manifeste à transmettre: ${manifeste.numeroManifeste}`);
+      console.log(`🔗 [PAYS A] URL Kit: ${kitClient.baseURL}/manifeste/transmission`);
+      
       try {
-        console.log(`🚀 [Pays A] Début transmission DIRECTE vers Kit MuleSoft: ${manifeste.id}`);
-        
-        // ✅ CORRECTION: Appel direct vers MuleSoft avec timeout plus long
+        // ✅ Transmission avec logging maximal
+        console.log(`⏳ [PAYS A] Appel Kit MuleSoft en cours...`);
         const startTime = Date.now();
-        reponseKit = await Promise.race([
-          kitClient.transmettreManifeste(manifeste),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout transmission Kit MuleSoft > 45s')), 45000)
-          )
-        ]);
+        
+        reponseKit = await kitClient.transmettreManifeste(manifeste);
         const duration = Date.now() - startTime;
-        reponseKit.latence = duration;
         
-        transmissionReussie = true;
+        transmissionKitReussie = true;
+        console.log(`\n🎉 [PAYS A] ═══ TRANSMISSION KIT MULESOFT RÉUSSIE ═══`);
+        console.log(`✅ [PAYS A] Durée: ${duration}ms`);
+        console.log(`✅ [PAYS A] Status Kit: ${reponseKit.status}`);
+        console.log(`✅ [PAYS A] Corrélation: ${reponseKit.correlationId}`);
+        console.log(`📋 [PAYS A] Réponse Kit:`, JSON.stringify(reponseKit, null, 2));
+        console.log(`🎯 [PAYS A] ➤ Kit MuleSoft devrait maintenant insérer dans Supabase`);
         
-        console.log(`✅ [Pays A] Transmission Kit MuleSoft réussie (${duration}ms):`, {
-          manifesteId: manifeste.id,
-          kitResponse: reponseKit.status,
-          latence: reponseKit.latence,
-          correlationId: reponseKit.correlationId
-        });
+      } catch (kitError) {
+        transmissionKitReussie = false;
+        console.error(`\n💥 [PAYS A] ═══ ÉCHEC TRANSMISSION KIT MULESOFT ═══`);
+        console.error(`❌ [PAYS A] Erreur: ${kitError.message}`);
+        console.error(`❌ [PAYS A] Status Code: ${kitError.statusCode || 'N/A'}`);
+        console.error(`❌ [PAYS A] Retry recommandé: ${kitError.retryRecommended ? 'OUI' : 'NON'}`);
+        console.error(`❌ [PAYS A] URL Kit: ${kitError.kitUrl}`);
+        console.error(`🚨 [PAYS A] ➤ Supabase NE SERA PAS mis à jour car Kit MuleSoft inaccessible`);
         
-      } catch (error) {
-        console.error(`❌ [Pays A] Erreur transmission Kit MuleSoft:`, {
-          manifesteId: manifeste.id,
-          erreur: error.message,
-          stack: error.stack,
-          details: error.response?.data || error.cause
-        });
-        erreurTransmission = error.message;
-        transmissionReussie = false;
-        
-        // ✅ AMÉLIORATION: Enregistrer l'erreur avec plus de détails
         reponseKit = {
           status: 'ERROR',
-          message: error.message,
-          erreur: error.message,
+          message: kitError.message,
+          erreur: kitError.message,
           timestamp: new Date(),
-          latence: 0
+          statusCode: kitError.statusCode,
+          retryRecommended: kitError.retryRecommended,
+          originalError: kitError.originalError?.message
         };
       }
 
-      // Étape 3: Enregistrer le résultat de la transmission TOUJOURS
+      // ✅ ÉTAPE 4: Enregistrement résultat transmission (CRITIQUE pour statistiques)
+      console.log('\n📝 [PAYS A] Enregistrement résultat transmission...');
       try {
-        database.enregistrerTransmissionKit(
-          manifeste.id, 
-          reponseKit || { erreur: erreurTransmission }, 
-          transmissionReussie
-        );
-        console.log(`📝 [Pays A] Transmission Kit enregistrée pour manifeste ${manifeste.id}`);
+        database.enregistrerTransmissionKit(manifeste.id, reponseKit, transmissionKitReussie);
+        console.log(`✅ [PAYS A] Transmission Kit enregistrée: ${transmissionKitReussie ? 'SUCCÈS' : 'ÉCHEC'}`);
       } catch (dbError) {
-        console.error(`❌ [Pays A] Erreur enregistrement transmission:`, dbError);
-        // Continue même si l'enregistrement échoue
+        console.error(`❌ [PAYS A] Erreur enregistrement transmission:`, dbError);
       }
 
-      // ✅ CORRECTION: Mettre à jour les statistiques TOUJOURS
-      try {
-        const statsUpdated = database.obtenirStatistiques();
-        console.log(`📊 [Pays A] Statistiques mises à jour:`, {
-          manifestesCreees: statsUpdated.manifestesCreees,
-          transmissionsKit: statsUpdated.transmissionsKit,
-          transmissionsReussies: statsUpdated.transmissionsReussies
-        });
-      } catch (statsError) {
-        console.error(`❌ [Pays A] Erreur mise à jour statistiques:`, statsError);
-      }
+      // ✅ ÉTAPE 5: Mise à jour statistiques locales
+      const statsFinales = database.obtenirStatistiques();
+      console.log('\n📊 [PAYS A] Statistiques finales:', {
+        manifestesCreees: statsFinales.manifestesCreees,
+        transmissionsKit: statsFinales.transmissionsKit,
+        transmissionsReussies: statsFinales.transmissionsReussies,
+        tauxReussite: statsFinales.tauxReussiteTransmission
+      });
 
-      // Étape 4: Préparer la réponse
+      // ✅ ÉTAPE 6: Réponse avec diagnostic complet
+      const statusCode = transmissionKitReussie ? 200 : 206; // 206 = Partial Success
+      const responseStatus = transmissionKitReussie ? 'SUCCESS' : 'PARTIAL_SUCCESS';
+      
       const reponse = {
-        status: transmissionReussie ? 'SUCCESS' : 'PARTIAL_SUCCESS',
-        message: transmissionReussie 
-          ? 'Manifeste créé et transmis au Kit MuleSoft avec succès'
-          : 'Manifeste créé mais erreur de transmission au Kit MuleSoft',
+        status: responseStatus,
+        message: transmissionKitReussie 
+          ? '🎉 Manifeste créé et transmis au Kit MuleSoft avec succès'
+          : '⚠️ Manifeste créé localement, transmission Kit MuleSoft échouée',
         
         manifeste: {
           id: manifeste.id,
@@ -124,69 +120,94 @@ module.exports = async (req, res) => {
           dateCreation: manifeste.dateCreation
         },
         
-        // ✅ CORRECTION: Informations détaillées sur la transmission MuleSoft
-        transmission: {
-          vers: 'Kit MuleSoft (Direct)',
-          urlKit: kitClient.baseURL,
-          reussie: transmissionReussie,
+        // ✅ Diagnostic transmission détaillé
+        transmissionKit: {
+          urlKit: kitClient.baseURL + '/manifeste/transmission',
+          reussie: transmissionKitReussie,
           timestamp: new Date().toISOString(),
-          latence: reponseKit?.latence || null,
-          correlationId: reponseKit?.correlationId || null,
-          ...(reponseKit && transmissionReussie && { 
-            reponseKit: {
+          ...(transmissionKitReussie && {
+            succes: {
               status: reponseKit.status,
               message: reponseKit.message,
-              timestamp: reponseKit.timestamp
+              correlationId: reponseKit.correlationId,
+              latence: reponseKit.latence,
+              supabaseUpdate: 'Kit MuleSoft devrait insérer dans Supabase'
             }
           }),
-          ...(erreurTransmission && { 
-            erreur: erreurTransmission,
-            detailsErreur: reponseKit,
-            recommandation: 'Vérifiez la connectivité avec Kit MuleSoft et les logs détaillés'
+          ...(reponseKit && !transmissionKitReussie && {
+            echec: {
+              erreur: reponseKit.erreur,
+              statusCode: reponseKit.statusCode,
+              retryRecommended: reponseKit.retryRecommended,
+              cause: 'Kit MuleSoft inaccessible ou erreur de traitement',
+              impact: 'Supabase ne sera PAS mis à jour'
+            }
           })
         },
         
-        prochainEtapes: transmissionReussie ? [
-          'Le manifeste a été routé vers le pays de destination via Kit MuleSoft',
-          'La Commission UEMOA a été notifiée automatiquement',
-          'Attente de traitement par le pays destinataire',
-          'Vous recevrez une autorisation de mainlevée après paiement'
+        // ✅ Instructions selon le résultat
+        instructions: transmissionKitReussie ? [
+          '✅ Manifeste sauvegardé localement dans Pays A',
+          '✅ Manifeste transmis au Kit MuleSoft avec succès',
+          '🔄 Kit MuleSoft va insérer les données dans Supabase',
+          '📡 Kit MuleSoft va router vers le pays de destination',
+          '📊 Commission UEMOA sera notifiée automatiquement'
         ] : [
-          'Le manifeste est sauvegardé localement dans le système Pays A',
-          'Tentative de retransmission vers Kit MuleSoft recommandée',
-          'Vérifiez la connectivité réseau et le statut du Kit',
-          'Contactez l\'administrateur si le problème persiste'
+          '✅ Manifeste sauvegardé localement dans Pays A',
+          '❌ Transmission Kit MuleSoft échouée',
+          '🚨 Supabase ne sera pas mis à jour pour ce manifeste',
+          '🔧 Vérifiez la connectivité vers Kit MuleSoft',
+          '🔄 Réessayez la création ou contactez l\'administrateur'
         ],
+        
+        // ✅ Diagnostic technique pour debug
+        diagnostic: {
+          manifesteLocal: '✅ CRÉÉ',
+          kitMulesoft: transmissionKitReussie ? '✅ TRANSMIS' : '❌ ÉCHEC',
+          supabaseUpdate: transmissionKitReussie ? '🔄 EN COURS (via Kit)' : '❌ BLOQUÉ',
+          statistiquesLocales: '✅ MISES À JOUR'
+        },
         
         timestamp: new Date().toISOString()
       };
 
-      const statusCode = transmissionReussie ? 200 : 206; // 206 = Partial Content
-      res.status(statusCode).json(reponse);
+      console.log('\n🏁 [PAYS A] ═══════════════════════════════════════════════════════');
+      console.log(`🏁 [PAYS A] RÉSULTAT FINAL: ${responseStatus}`);
+      console.log(`📋 [PAYS A] Manifeste: ${manifeste.id} - ${transmissionKitReussie ? 'Kit OK' : 'Kit KO'}`);
+      console.log(`🎯 [PAYS A] Supabase: ${transmissionKitReussie ? 'Sera mis à jour par Kit' : 'Ne sera PAS mis à jour'}`);
+      console.log('🏁 [PAYS A] ═══════════════════════════════════════════════════════');
 
-      // Log pour monitoring avec détails Kit
-      console.log(`📊 [Pays A] Résumé transmission manifeste ${manifeste.id}:`, {
-        local: '✅ SAUVEGARDE',
-        kitMulesoft: transmissionReussie ? '✅ TRANSMIS' : '❌ ECHEC',
-        latence: reponseKit?.latence || 'N/A',
-        destination: manifeste.marchandises?.[0]?.paysDestination,
-        erreur: erreurTransmission || 'N/A'
-      });
+      res.status(statusCode).json(reponse);
       
     } catch (error) {
-      console.error('❌ [Pays A] Erreur création manifeste:', {
-        message: error.message,
-        stack: error.stack,
-        requestBody: req.body
-      });
+      console.error('\n💥 [PAYS A] ═══ ERREUR FATALE CRÉATION MANIFESTE ═══');
+      console.error('❌ [PAYS A] Erreur:', error.message);
+      console.error('❌ [PAYS A] Stack:', error.stack);
+      console.error('📋 [PAYS A] Request Body:', JSON.stringify(req.body, null, 2));
+      console.error('📊 [PAYS A] Manifeste créé:', !!manifeste);
       
-      res.status(500).json({
+      const errorResponse = {
         status: 'ERROR',
-        message: 'Erreur interne lors de la création du manifeste',
+        message: 'Erreur fatale lors de la création du manifeste',
         erreur: error.message,
-        recommandation: 'Vérifiez les logs serveur et la connectivité Kit MuleSoft',
-        timestamp: new Date().toISOString()
-      });
+        timestamp: new Date().toISOString(),
+        diagnostic: {
+          manifesteLocal: manifeste ? '✅ CRÉÉ malgré l\'erreur' : '❌ NON CRÉÉ',
+          kitMulesoft: '❓ NON TESTÉ (erreur avant)',
+          supabaseUpdate: '❌ IMPOSSIBLE'
+        }
+      };
+      
+      // Si manifeste créé malgré l'erreur, le signaler
+      if (manifeste) {
+        errorResponse.status = 'PARTIAL_SUCCESS';
+        errorResponse.manifeste = {
+          id: manifeste.id,
+          numeroManifeste: manifeste.numeroManifeste
+        };
+      }
+      
+      res.status(manifeste ? 206 : 500).json(errorResponse);
     }
   } else {
     res.status(405).json({ 
@@ -196,50 +217,76 @@ module.exports = async (req, res) => {
   }
 };
 
-// Validation des données manifeste (améliorée avec logging)
+// ✅ Validation stricte pour Kit MuleSoft
 function validerDonneesManifeste(donnees) {
   const erreurs = [];
 
-  console.log('🔍 [Pays A] Validation manifeste:', {
+  console.log('🔍 [PAYS A] Validation pour Kit MuleSoft:', {
     hasData: !!donnees,
     numeroManifeste: donnees?.numeroManifeste,
     transporteur: donnees?.transporteur,
+    dateArrivee: donnees?.dateArrivee,
     marchandisesCount: donnees?.marchandises?.length
   });
 
-  if (!donnees.numeroManifeste || donnees.numeroManifeste.trim() === '') {
-    erreurs.push('Le numéro de manifeste est requis');
+  if (!donnees) {
+    erreurs.push('Données manifeste complètement manquantes');
+    return erreurs;
   }
 
-  if (!donnees.transporteur || donnees.transporteur.trim() === '') {
-    erreurs.push('Le transporteur est requis');
+  // Champs obligatoires pour Kit MuleSoft
+  if (!donnees.numeroManifeste || typeof donnees.numeroManifeste !== 'string' || donnees.numeroManifeste.trim() === '') {
+    erreurs.push('numeroManifeste requis pour Kit MuleSoft (string non vide)');
+  }
+
+  if (!donnees.transporteur || typeof donnees.transporteur !== 'string' || donnees.transporteur.trim() === '') {
+    erreurs.push('transporteur requis pour Kit MuleSoft (string non vide)');
   }
 
   if (!donnees.dateArrivee) {
-    erreurs.push('La date d\'arrivée est requise');
+    erreurs.push('dateArrivee requise pour Kit MuleSoft');
+  } else {
+    const dateArrivee = new Date(donnees.dateArrivee);
+    if (isNaN(dateArrivee.getTime())) {
+      erreurs.push('Format dateArrivee invalide pour Kit MuleSoft');
+    }
   }
 
-  if (!donnees.marchandises || !Array.isArray(donnees.marchandises) || donnees.marchandises.length === 0) {
-    erreurs.push('Au moins une marchandise est requise');
+  // Validation marchandises CRITIQUE pour Kit MuleSoft
+  if (!donnees.marchandises || !Array.isArray(donnees.marchandises)) {
+    erreurs.push('marchandises doit être un tableau pour Kit MuleSoft');
+  } else if (donnees.marchandises.length === 0) {
+    erreurs.push('Au moins une marchandise requise pour Kit MuleSoft');
   } else {
     donnees.marchandises.forEach((marchandise, index) => {
-      if (!marchandise.paysDestination) {
-        erreurs.push(`Pays de destination requis pour la marchandise ${index + 1}`);
+      const prefix = `Marchandise ${index + 1} (Kit MuleSoft)`;
+      
+      // paysDestination OBLIGATOIRE pour routing Kit
+      if (!marchandise.paysDestination || typeof marchandise.paysDestination !== 'string' || marchandise.paysDestination.trim() === '') {
+        erreurs.push(`${prefix}: paysDestination OBLIGATOIRE pour routing Kit MuleSoft`);
       }
-      if (!marchandise.designation) {
-        erreurs.push(`Désignation requise pour la marchandise ${index + 1}`);
+      
+      // designation obligatoire
+      if (!marchandise.designation || typeof marchandise.designation !== 'string' || marchandise.designation.trim() === '') {
+        erreurs.push(`${prefix}: designation requise pour Kit MuleSoft`);
       }
-      if (!marchandise.poidsBrut || marchandise.poidsBrut <= 0) {
-        erreurs.push(`Poids brut valide requis pour la marchandise ${index + 1}`);
+      
+      // poidsBrut doit être numérique
+      if (marchandise.poidsBrut !== undefined && (isNaN(parseFloat(marchandise.poidsBrut)) || parseFloat(marchandise.poidsBrut) <= 0)) {
+        erreurs.push(`${prefix}: poidsBrut doit être un nombre positif pour Kit MuleSoft`);
+      }
+      
+      // nombreColis doit être entier positif
+      if (marchandise.nombreColis !== undefined && (isNaN(parseInt(marchandise.nombreColis)) || parseInt(marchandise.nombreColis) <= 0)) {
+        erreurs.push(`${prefix}: nombreColis doit être un entier positif pour Kit MuleSoft`);
       }
     });
   }
 
-  // Log des erreurs de validation
   if (erreurs.length > 0) {
-    console.log(`⚠️ [Pays A] Validation manifeste échouée:`, erreurs);
+    console.error(`❌ [PAYS A] Validation Kit MuleSoft échouée (${erreurs.length} erreurs):`, erreurs);
   } else {
-    console.log(`✅ [Pays A] Validation manifeste réussie`);
+    console.log(`✅ [PAYS A] Validation Kit MuleSoft réussie - Prêt pour transmission`);
   }
 
   return erreurs;

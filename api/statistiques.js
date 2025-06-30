@@ -16,23 +16,27 @@ module.exports = async (req, res) => {
     try {
       console.log('📊 [Pays A] Demande statistiques');
 
-      // Obtenir les statistiques de base
+      // ✅ CORRECTION 1: Obtenir les statistiques locales TOUJOURS (priorité)
       const stats = database.obtenirStatistiques();
-      const interactions = database.obtenirInteractionsKit(10);
+      console.log('✅ [Pays A] Statistiques locales récupérées:', {
+        manifestes: stats.manifestesCreees,
+        transmissions: stats.transmissionsKit,
+        succès: stats.transmissionsReussies
+      });
       
-      // ✅ CORRECTION: Test Kit direct vers MuleSoft (sans bloquer)
+      // ✅ CORRECTION 2: Test Kit en mode non-bloquant et plus rapide
       let kitInfo = null;
       try {
-        console.log('🔍 [Pays A] Test Kit MuleSoft direct...');
+        console.log('🔍 [Pays A] Test Kit MuleSoft rapide...');
         kitInfo = await Promise.race([
-          kitClient.verifierSante(), // ✅ Va maintenant directement vers MuleSoft
+          kitClient.verifierSante(),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout Kit MuleSoft > 5s')), 5000)
+            setTimeout(() => reject(new Error('Timeout Kit MuleSoft > 3s')), 3000) // ✅ Réduit à 3s
           )
         ]);
-        console.log('✅ [Pays A] Kit MuleSoft status:', kitInfo.status);
+        console.log('✅ [Pays A] Kit MuleSoft accessible:', kitInfo.status);
       } catch (error) {
-        console.error('❌ [Pays A] Kit MuleSoft inaccessible:', error.message);
+        console.log('⚠️ [Pays A] Kit MuleSoft inaccessible (non bloquant):', error.message);
         kitInfo = { 
           accessible: false, 
           erreur: error.message,
@@ -42,14 +46,15 @@ module.exports = async (req, res) => {
       }
 
       // Calculer des métriques avancées
-      const metriques = calculerMetriques(stats, interactions);
+      const metriques = calculerMetriques(stats, database.obtenirInteractionsKit(10));
 
+      // ✅ CORRECTION 3: TOUJOURS retourner SUCCESS pour les statistiques locales
       const reponse = {
-        status: 'SUCCESS',
+        status: 'SUCCESS', // ✅ TOUJOURS SUCCESS - Kit status séparé
         message: 'Statistiques Pays A (Côtier)',
         timestamp: new Date().toISOString(),
         
-        // Statistiques principales
+        // Statistiques principales (TOUJOURS disponibles)
         statistiques: {
           ...stats,
           performance: {
@@ -59,19 +64,21 @@ module.exports = async (req, res) => {
           }
         },
         
-        // ✅ CORRECTION: Informations Kit MuleSoft directes
+        // ✅ CORRECTION 4: Statut Kit séparé des statistiques principales
         kit: {
           status: kitInfo?.status || 'UNKNOWN',
           accessible: kitInfo?.accessible || false,
-          url: kitClient.baseURL, // URL MuleSoft directe
+          url: kitClient.baseURL,
           latence: kitInfo?.latence || null,
           dernierTest: kitInfo?.timestamp || new Date().toISOString(),
-          modeConnexion: 'DIRECT_MULESOFT', // ✅ Indique connexion directe
-          source: kitInfo?.source || 'DIRECT_MULESOFT_TEST'
+          modeConnexion: 'DIRECT_MULESOFT',
+          source: kitInfo?.source || 'DIRECT_MULESOFT_TEST',
+          // ✅ NOUVEAU: Statut séparé pour UI
+          connectivity: kitInfo?.accessible ? 'CONNECTED' : 'DISCONNECTED'
         },
         
         // Interactions récentes avec le Kit
-        interactionsRecentes: interactions.map(interaction => ({
+        interactionsRecentes: database.obtenirInteractionsKit(5).map(interaction => ({
           id: interaction.id,
           type: interaction.type,
           timestamp: interaction.timestamp,
@@ -90,34 +97,46 @@ module.exports = async (req, res) => {
         // Données pour graphiques
         tendances: metriques.tendances,
         
-        // ✅ CORRECTION: Santé du système avec info Kit directe
+        // ✅ CORRECTION 5: Santé système avec distinction claire
         systemeSante: {
-          servicePrincipal: 'UP',
-          baseDonnees: 'UP',
-          kitInterconnexion: kitInfo?.accessible ? 'UP' : 'DOWN',
-          modeIntegration: 'DIRECT_MULESOFT', // ✅ Nouveau champ
-          urlKit: kitClient.baseURL, // ✅ URL directe MuleSoft
-          derniereMiseAJour: stats.derniereMiseAJour
+          servicePrincipal: 'UP', // ✅ Service local toujours UP
+          baseDonnees: 'UP',      // ✅ Base mémoire toujours UP
+          kitInterconnexion: kitInfo?.accessible ? 'UP' : 'DOWN', // ✅ Kit séparé
+          modeIntegration: 'DIRECT_MULESOFT',
+          urlKit: kitClient.baseURL,
+          derniereMiseAJour: stats.derniereMiseAJour,
+          // ✅ NOUVEAU: Impact sur fonctionnalités
+          fonctionnalitesAffectees: kitInfo?.accessible ? [] : ['Transmission temps réel', 'Synchronisation inter-pays']
         }
       };
 
-      // ✅ Status global (DEGRADED si Kit inaccessible mais service fonctionne)
-      const globalStatus = kitInfo?.accessible ? 'UP' : 'DEGRADED';
+      // ✅ TOUJOURS 200 OK pour les statistiques locales
+      res.status(200).json(reponse);
       
-      res.status(200).json({
-        ...reponse,
-        status: globalStatus
-      });
+      console.log('📊 [Pays A] Statistiques envoyées - Kit status:', kitInfo?.accessible ? 'OK' : 'KO');
       
     } catch (error) {
       console.error('❌ [Pays A] Erreur récupération statistiques:', error);
       
-      res.status(500).json({
-        status: 'ERROR',
-        message: 'Erreur lors de la récupération des statistiques',
-        erreur: error.message,
-        timestamp: new Date().toISOString()
-      });
+      // ✅ CORRECTION 6: Même en cas d'erreur, essayer de retourner les stats de base
+      try {
+        const statsBasiques = database.obtenirStatistiques();
+        res.status(200).json({
+          status: 'PARTIAL', // ✅ Statut partiel mais utilisable
+          message: 'Statistiques partielles disponibles',
+          statistiques: statsBasiques,
+          erreur: error.message,
+          timestamp: new Date().toISOString()
+        });
+      } catch (fatalError) {
+        // ✅ Erreur fatale uniquement si impossible d'accéder aux stats locales
+        res.status(500).json({
+          status: 'ERROR',
+          message: 'Erreur fatale lors de la récupération des statistiques',
+          erreur: fatalError.message,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   } else {
     res.status(405).json({ 
@@ -127,7 +146,7 @@ module.exports = async (req, res) => {
   }
 };
 
-// Fonction pour calculer des métriques avancées (inchangée)
+// ✅ Fonction pour calculer des métriques avancées (inchangée mais optimisée)
 function calculerMetriques(stats, interactions) {
   // Taux de réussite global
   const tauxReussiteGlobal = stats.transmissionsKit > 0 
@@ -136,7 +155,7 @@ function calculerMetriques(stats, interactions) {
 
   // Latence moyenne des interactions réussies
   const interactionsAvecLatence = interactions
-    .filter(i => i.donnees?.details?.latence)
+    .filter(i => i.donnees?.details?.latence && i.donnees?.details?.latence > 0)
     .map(i => i.donnees.details.latence);
   
   const latenceMoyenne = interactionsAvecLatence.length > 0
