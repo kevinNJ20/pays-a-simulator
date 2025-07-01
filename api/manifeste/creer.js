@@ -1,3 +1,8 @@
+// ============================================================================
+// CORRECTION BACKEND : api/manifeste/creer.js
+// Remplacer la fonction principale dans api/manifeste/creer.js
+// ============================================================================
+
 const database = require('../../lib/database');
 const kitClient = require('../../lib/kit-client');
 
@@ -19,49 +24,54 @@ module.exports = async (req, res) => {
     
     try {
       console.log('\n🎯 [PAYS A] ═══════════════════════════════════════════════════════');
-      console.log('🎯 [PAYS A] DÉBUT CRÉATION MANIFESTE AVEC FOCUS KIT MULESOFT');
+      console.log('🎯 [PAYS A] DÉBUT CRÉATION MANIFESTE FORMAT UEMOA DIRECT');
       console.log('🎯 [PAYS A] ═══════════════════════════════════════════════════════');
       console.log('📋 [PAYS A] Données reçues (RAW):', JSON.stringify(req.body, null, 2));
 
-      // ✅ ÉTAPE 1: Nettoyage et normalisation des données d'entrée
-      const donneesNettoyees = nettoyerDonneesManifeste(req.body);
+      // ✅ CORRECTION MAJEURE : Détecter le format reçu
+      const formatDetecte = detecterFormatDonnees(req.body);
+      console.log(`🔍 [PAYS A] Format détecté: ${formatDetecte}`);
+
+      let donneesNettoyees;
+      
+      if (formatDetecte === 'UEMOA') {
+        // ✅ NOUVEAU : Traitement direct du format UEMOA
+        console.log('✅ [PAYS A] Format UEMOA détecté - Traitement direct');
+        donneesNettoyees = nettoyerDonneesUEMOA(req.body);
+      } else {
+        // ✅ Traitement legacy (ancien code conservé pour compatibilité)
+        console.log('🔄 [PAYS A] Format legacy détecté - Conversion vers UEMOA');
+        donneesNettoyees = nettoyerDonneesManifeste(req.body);
+      }
+
       console.log('🧹 [PAYS A] Données nettoyées:', JSON.stringify(donneesNettoyees, null, 2));
 
-      // ✅ ÉTAPE 2: Validation STRICTE mais robuste des données
-      const erreurs = validerDonneesManifeste(donneesNettoyees);
+      // ✅ VALIDATION UNIFIÉE
+      const erreurs = validerDonneesManifeste(donneesNettoyees, formatDetecte);
       if (erreurs.length > 0) {
         console.error('❌ [PAYS A] Validation échouée - ARRÊT:', erreurs);
         return res.status(400).json({
           status: 'ERROR',
           message: 'Validation échouée - données manifeste invalides',
           erreurs,
-          donneesRecues: req.body, // Pour debug
+          formatDetecte,
+          donneesRecues: req.body,
           timestamp: new Date().toISOString()
         });
       }
 
-      // ✅ ÉTAPE 3: Création manifeste LOCAL (sauvegarde prioritaire)
+      // ✅ Création manifeste LOCAL
       console.log('💾 [PAYS A] Création manifeste en base locale...');
       manifeste = database.creerManifeste(donneesNettoyees);
       console.log(`✅ [PAYS A] Manifeste ${manifeste.id} créé localement - SAUVEGARDÉ`);
 
-      // ✅ ÉTAPE 4: TRANSMISSION CRITIQUE vers Kit MuleSoft avec données validées
+      // ✅ TRANSMISSION vers Kit MuleSoft
       console.log('\n🚀 [PAYS A] ═══ TRANSMISSION VERS KIT MULESOFT ═══');
       console.log(`🎯 [PAYS A] OBJECTIF: Kit MuleSoft doit recevoir le manifeste pour insertion Supabase`);
-      console.log(`📋 [PAYS A] Manifeste à transmettre: ${manifeste.numeroManifeste}`);
+      console.log(`📋 [PAYS A] Manifeste à transmettre: ${manifeste.numero_manif || manifeste.numeroManifeste}`);
       console.log(`🔗 [PAYS A] URL Kit: ${kitClient.baseURL}/manifeste/transmission`);
       
-      // ✅ Log critique des données avant transmission
-      console.log('🔍 [PAYS A] Validation données avant Kit MuleSoft:');
-      console.log(`   numeroManifeste: "${manifeste.numeroManifeste}" (type: ${typeof manifeste.numeroManifeste})`);
-      console.log(`   transporteur: "${manifeste.transporteur}" (type: ${typeof manifeste.transporteur})`);
-      console.log(`   marchandises: ${Array.isArray(manifeste.marchandises) ? manifeste.marchandises.length : 'NON ARRAY'} item(s)`);
-      if (manifeste.marchandises && manifeste.marchandises[0]) {
-        console.log(`   première marchandise paysDestination: "${manifeste.marchandises[0].paysDestination}"`);
-      }
-      
       try {
-        // ✅ Transmission avec logging maximal
         console.log(`⏳ [PAYS A] Appel Kit MuleSoft en cours...`);
         const startTime = Date.now();
         
@@ -85,7 +95,6 @@ module.exports = async (req, res) => {
         console.error(`❌ [PAYS A] URL Kit: ${kitError.kitUrl || 'N/A'}`);
         console.error(`🚨 [PAYS A] ➤ Supabase NE SERA PAS mis à jour car Kit MuleSoft inaccessible`);
         
-        // ✅ CORRECTION CRITIQUE: Créer un objet reponseKit sécurisé
         reponseKit = {
           status: 'ERROR',
           message: kitError.message,
@@ -100,7 +109,7 @@ module.exports = async (req, res) => {
         };
       }
 
-      // ✅ ÉTAPE 5: Enregistrement résultat transmission (CRITIQUE pour statistiques)
+      // ✅ Enregistrement résultat transmission
       console.log('\n📝 [PAYS A] Enregistrement résultat transmission...');
       try {
         database.enregistrerTransmissionKit(manifeste.id, reponseKit, transmissionKitReussie);
@@ -109,36 +118,29 @@ module.exports = async (req, res) => {
         console.error(`❌ [PAYS A] Erreur enregistrement transmission:`, dbError);
       }
 
-      // ✅ ÉTAPE 6: Mise à jour statistiques locales
-      const statsFinales = database.obtenirStatistiques();
-      console.log('\n📊 [PAYS A] Statistiques finales:', {
-        manifestesCreees: statsFinales.manifestesCreees,
-        transmissionsKit: statsFinales.transmissionsKit,
-        transmissionsReussies: statsFinales.transmissionsReussies,
-        tauxReussite: statsFinales.tauxReussiteTransmission
-      });
-
-      // ✅ ÉTAPE 7: Réponse avec diagnostic complet - ACCÈS SÉCURISÉS
-      const statusCode = transmissionKitReussie ? 200 : 206; // 206 = Partial Success
+      // ✅ Réponse finale
+      const statusCode = transmissionKitReussie ? 200 : 206;
       const responseStatus = transmissionKitReussie ? 'SUCCESS' : 'PARTIAL_SUCCESS';
       
       const reponse = {
         status: responseStatus,
         message: transmissionKitReussie 
-          ? '🎉 Manifeste créé et transmis au Kit MuleSoft avec succès'
-          : '⚠️ Manifeste créé localement, transmission Kit MuleSoft échouée',
+          ? '🎉 Manifeste UEMOA créé et transmis au Kit MuleSoft avec succès'
+          : '⚠️ Manifeste UEMOA créé localement, transmission Kit MuleSoft échouée',
         
         manifeste: {
           id: manifeste.id,
-          numeroManifeste: manifeste.numeroManifeste,
-          transporteur: manifeste.transporteur,
-          paysDestination: manifeste.marchandises?.[0]?.paysDestination,
-          nombreMarchandises: manifeste.marchandises?.length || 0,
+          numero_manif: manifeste.numero_manif,
+          numeroManifeste: manifeste.numeroManifeste, // Compatibilité
+          consignataire: manifeste.consignataire,
+          transporteur: manifeste.transporteur, // Compatibilité
+          navire: manifeste.navire,
+          formatOriginal: formatDetecte,
+          nombreArticles: manifeste.nbre_article || manifeste.marchandises?.length || 0,
           statut: manifeste.statut,
           dateCreation: manifeste.dateCreation
         },
         
-        // ✅ CORRECTION CRITIQUE: Diagnostic transmission avec accès ultra-sécurisés
         transmissionKit: {
           urlKit: kitClient.baseURL + '/manifeste/transmission',
           reussie: transmissionKitReussie,
@@ -164,7 +166,6 @@ module.exports = async (req, res) => {
           })
         },
         
-        // ✅ Instructions selon le résultat
         instructions: transmissionKitReussie ? [
           '✅ Manifeste sauvegardé localement dans Pays A',
           '✅ Manifeste transmis au Kit MuleSoft avec succès',
@@ -179,8 +180,8 @@ module.exports = async (req, res) => {
           '🔄 Réessayez la création ou contactez l\'administrateur'
         ],
         
-        // ✅ Diagnostic technique pour debug
         diagnostic: {
+          formatDetecte,
           manifesteLocal: '✅ CRÉÉ',
           kitMulesoft: transmissionKitReussie ? '✅ TRANSMIS' : '❌ ÉCHEC',
           supabaseUpdate: transmissionKitReussie ? '🔄 EN COURS (via Kit)' : '❌ BLOQUÉ',
@@ -192,7 +193,7 @@ module.exports = async (req, res) => {
 
       console.log('\n🏁 [PAYS A] ═══════════════════════════════════════════════════════');
       console.log(`🏁 [PAYS A] RÉSULTAT FINAL: ${responseStatus}`);
-      console.log(`📋 [PAYS A] Manifeste: ${manifeste.id} - ${transmissionKitReussie ? 'Kit OK' : 'Kit KO'}`);
+      console.log(`📋 [PAYS A] Manifeste: ${manifeste.id} - Format: ${formatDetecte} - Kit: ${transmissionKitReussie ? 'OK' : 'KO'}`);
       console.log(`🎯 [PAYS A] Supabase: ${transmissionKitReussie ? 'Sera mis à jour par Kit' : 'Ne sera PAS mis à jour'}`);
       console.log('🏁 [PAYS A] ═══════════════════════════════════════════════════════');
 
@@ -222,7 +223,7 @@ module.exports = async (req, res) => {
         errorResponse.status = 'PARTIAL_SUCCESS';
         errorResponse.manifeste = {
           id: manifeste.id,
-          numeroManifeste: manifeste.numeroManifeste
+          numero_manif: manifeste.numero_manif || manifeste.numeroManifeste
         };
       }
       
@@ -236,109 +237,7 @@ module.exports = async (req, res) => {
   }
 };
 
-// ✅ FONCTION DE NETTOYAGE ET NORMALISATION DES DONNÉES
-function nettoyerDonneesManifeste(donnees) {
-    console.log('🧹 [PAYS A] Nettoyage des données d\'entrée...');
-    
-    if (!donnees || typeof donnees !== 'object') {
-        console.warn('⚠️ [PAYS A] Données d\'entrée invalides, utilisation d\'un objet vide');
-        return {};
-    }
-
-    // ✅ Détecter le format
-    const formatDetecte = detecterFormatDonnees(donnees);
-    console.log(`🔍 [PAYS A] Format détecté: ${formatDetecte}`);
-
-    if (formatDetecte === 'UEMOA') {
-        // ✅ Données déjà au format UEMOA - nettoyage minimal
-        return {
-            // Champs UEMOA obligatoires
-            annee_manif: String(donnees.annee_manif || new Date().getFullYear()),
-            bureau_manif: String(donnees.bureau_manif || '18N').trim(),
-            numero_manif: parseInt(donnees.numero_manif) || Date.now(),
-            code_cgt: String(donnees.code_cgt || '014').trim(),
-            consignataire: String(donnees.consignataire || '').trim(),
-            repertoire: String(donnees.repertoire || '02402').trim(),
-            
-            // Informations navire
-            navire: String(donnees.navire || 'MARCO POLO').trim(),
-            provenance: String(donnees.provenance || 'ROTTERDAM').trim(),
-            pavillon: String(donnees.pavillon || 'LIBÉRIA').trim(),
-            date_arrivee: donnees.date_arrivee || null,
-            valapprox: parseFloat(donnees.valapprox) || 0,
-            
-            // Articles
-            nbre_article: parseInt(donnees.nbre_article) || (donnees.articles ? donnees.articles.length : 0),
-            articles: Array.isArray(donnees.articles) ? donnees.articles.map(article => ({
-                art: parseInt(article.art) || 1,
-                prec1: parseInt(article.prec1) || 0,
-                prec2: parseInt(article.prec2) || 0,
-                date_emb: article.date_emb || donnees.date_arrivee,
-                lieu_emb: String(article.lieu_emb || '').trim(),
-                pays_dest: String(article.pays_dest || '').trim(),
-                ville_dest: String(article.ville_dest || '').trim(),
-                connaissement: String(article.connaissement || '').trim(),
-                expediteur: String(article.expediteur || '').trim(),
-                destinataire: String(article.destinataire || '').trim(),
-                voie_dest: String(article.voie_dest || '').trim(),
-                ordre: String(article.ordre || '').trim(),
-                marchandise: String(article.marchandise || '').trim(),
-                poids: parseFloat(article.poids) || 0,
-                nbre_colis: parseInt(article.nbre_colis) || 1,
-                marque: String(article.marque || 'NM').trim(),
-                mode_cond: String(article.mode_cond || 'COLIS (PACKAGE)').trim(),
-                nbre_conteneur: parseInt(article.nbre_conteneur) || 1,
-                conteneurs: Array.isArray(article.conteneurs) ? article.conteneurs.map(cont => ({
-                    conteneur: String(cont.conteneur || '').trim(),
-                    type: String(cont.type || 'DRS').trim(),
-                    taille: String(cont.taille || '40').trim(),
-                    plomb: String(cont.plomb || '').trim()
-                })) : []
-            })) : []
-        };
-    } else {
-        // ✅ Format legacy - conversion vers UEMOA
-        const donneesNettoyees = {
-            // ✅ Champs obligatoires avec nettoyage
-            numeroManifeste: String(donnees.numeroManifeste || '').trim() || null,
-            transporteur: String(donnees.transporteur || '').trim() || null,
-            dateArrivee: donnees.dateArrivee || null,
-            
-            // ✅ Champs optionnels avec valeurs par défaut
-            navire: String(donnees.navire || '').trim() || 'MARCO POLO',
-            portEmbarquement: String(donnees.portEmbarquement || '').trim() || 'ROTTERDAM',
-            portDebarquement: String(donnees.portDebarquement || '').trim() || 'ABIDJAN',
-            
-            // ✅ Marchandises avec nettoyage
-            marchandises: []
-        };
-
-        // ✅ Traitement spécial pour les marchandises
-        if (Array.isArray(donnees.marchandises) && donnees.marchandises.length > 0) {
-            donneesNettoyees.marchandises = donnees.marchandises.map((marchandise, index) => ({
-                codeSH: String(marchandise.codeSH || '').trim() || '8703.21.10',
-                designation: String(marchandise.designation || '').trim() || null,
-                poidsBrut: parseFloat(marchandise.poidsBrut) || 0,
-                nombreColis: parseInt(marchandise.nombreColis) || 1,
-                destinataire: String(marchandise.destinataire || '').trim() || null,
-                paysDestination: String(marchandise.paysDestination || '').trim() || null
-            }));
-        } else {
-            // ✅ Créer une marchandise à partir des champs racine pour compatibilité
-            donneesNettoyees.marchandises = [{
-                codeSH: String(donnees.codeSH || '').trim() || '8703.21.10',
-                designation: String(donnees.designation || '').trim() || null,
-                poidsBrut: parseFloat(donnees.poidsBrut) || 0,
-                nombreColis: parseInt(donnees.nombreColis) || 1,
-                destinataire: String(donnees.destinataire || '').trim() || null,
-                paysDestination: String(donnees.paysDestination || '').trim() || null
-            }];
-        }
-
-        return donneesNettoyees;
-    }
-}
-
+// ✅ NOUVELLE FONCTION : Détecter le format des données reçues
 function detecterFormatDonnees(donnees) {
     if (!donnees || typeof donnees !== 'object') return 'UNKNOWN';
     
@@ -361,16 +260,111 @@ function detecterFormatDonnees(donnees) {
     return 'UNKNOWN';
 }
 
-// ✅ Validation stricte pour Kit MuleSoft avec messages d'erreur améliorés
-function validerDonneesManifeste(donnees) {
+// ✅ NOUVELLE FONCTION : Nettoyage spécifique format UEMOA
+function nettoyerDonneesUEMOA(donnees) {
+    console.log('🧹 [PAYS A] Nettoyage format UEMOA...');
+    
+    if (!donnees || typeof donnees !== 'object') {
+        console.warn('⚠️ [PAYS A] Données UEMOA invalides, utilisation d\'un objet vide');
+        return {};
+    }
+
+    return {
+        // ✅ Champs UEMOA obligatoires
+        annee_manif: String(donnees.annee_manif || new Date().getFullYear()),
+        bureau_manif: String(donnees.bureau_manif || '18N').trim(),
+        numero_manif: parseInt(donnees.numero_manif) || Date.now(),
+        code_cgt: String(donnees.code_cgt || '014').trim(),
+        consignataire: String(donnees.consignataire || '').trim(),
+        repertoire: String(donnees.repertoire || '02402').trim(),
+        
+        // ✅ Informations navire
+        navire: String(donnees.navire || 'MARCO POLO').trim(),
+        provenance: String(donnees.provenance || 'ROTTERDAM').trim(),
+        pavillon: String(donnees.pavillon || 'LIBÉRIA').trim(),
+        date_arrivee: donnees.date_arrivee || null,
+        valapprox: parseFloat(donnees.valapprox) || 0,
+        
+        // ✅ Articles
+        nbre_article: parseInt(donnees.nbre_article) || (donnees.articles ? donnees.articles.length : 0),
+        articles: Array.isArray(donnees.articles) ? donnees.articles.map(article => ({
+            art: parseInt(article.art) || 1,
+            prec1: parseInt(article.prec1) || 0,
+            prec2: parseInt(article.prec2) || 0,
+            date_emb: article.date_emb || donnees.date_arrivee,
+            lieu_emb: String(article.lieu_emb || '').trim(),
+            pays_dest: String(article.pays_dest || '').trim(),
+            ville_dest: String(article.ville_dest || '').trim(),
+            connaissement: String(article.connaissement || '').trim(),
+            expediteur: String(article.expediteur || '').trim(),
+            destinataire: String(article.destinataire || '').trim(),
+            voie_dest: String(article.voie_dest || '').trim(),
+            ordre: String(article.ordre || '').trim(),
+            marchandise: String(article.marchandise || '').trim(),
+            poids: parseFloat(article.poids) || 0,
+            nbre_colis: parseInt(article.nbre_colis) || 1,
+            marque: String(article.marque || 'NM').trim(),
+            mode_cond: String(article.mode_cond || 'COLIS (PACKAGE)').trim(),
+            nbre_conteneur: parseInt(article.nbre_conteneur) || 1,
+            conteneurs: Array.isArray(article.conteneurs) ? article.conteneurs.map(cont => ({
+                conteneur: String(cont.conteneur || '').trim(),
+                type: String(cont.type || 'DRS').trim(),
+                taille: String(cont.taille || '40').trim(),
+                plomb: String(cont.plomb || '').trim()
+            })) : []
+        })) : []
+    };
+}
+
+// ✅ FONCTION DE NETTOYAGE LEGACY (conservée pour compatibilité)
+function nettoyerDonneesManifeste(donnees) {
+    console.log('🧹 [PAYS A] Nettoyage des données legacy...');
+    
+    if (!donnees || typeof donnees !== 'object') {
+        console.warn('⚠️ [PAYS A] Données legacy invalides, utilisation d\'un objet vide');
+        return {};
+    }
+
+    const donneesNettoyees = {
+        numeroManifeste: String(donnees.numeroManifeste || '').trim() || null,
+        transporteur: String(donnees.transporteur || '').trim() || null,
+        dateArrivee: donnees.dateArrivee || null,
+        navire: String(donnees.navire || '').trim() || 'MARCO POLO',
+        portEmbarquement: String(donnees.portEmbarquement || '').trim() || 'ROTTERDAM',
+        portDebarquement: String(donnees.portDebarquement || '').trim() || 'ABIDJAN',
+        marchandises: []
+    };
+
+    if (Array.isArray(donnees.marchandises) && donnees.marchandises.length > 0) {
+        donneesNettoyees.marchandises = donnees.marchandises.map((marchandise, index) => ({
+            codeSH: String(marchandise.codeSH || '').trim() || '8703.21.10',
+            designation: String(marchandise.designation || '').trim() || null,
+            poidsBrut: parseFloat(marchandise.poidsBrut) || 0,
+            nombreColis: parseInt(marchandise.nombreColis) || 1,
+            destinataire: String(marchandise.destinataire || '').trim() || null,
+            paysDestination: String(marchandise.paysDestination || '').trim() || null
+        }));
+    } else {
+        donneesNettoyees.marchandises = [{
+            codeSH: String(donnees.codeSH || '').trim() || '8703.21.10',
+            designation: String(donnees.designation || '').trim() || null,
+            poidsBrut: parseFloat(donnees.poidsBrut) || 0,
+            nombreColis: parseInt(donnees.nombreColis) || 1,
+            destinataire: String(donnees.destinataire || '').trim() || null,
+            paysDestination: String(donnees.paysDestination || '').trim() || null
+        }];
+    }
+
+    return donneesNettoyees;
+}
+
+// ✅ VALIDATION UNIFIÉE pour UEMOA et Legacy
+function validerDonneesManifeste(donnees, format) {
   const erreurs = [];
 
-  console.log('🔍 [PAYS A] Validation pour Kit MuleSoft:', {
+  console.log(`🔍 [PAYS A] Validation format ${format}:`, {
     hasData: !!donnees,
-    numeroManifeste: donnees?.numeroManifeste,
-    transporteur: donnees?.transporteur,
-    dateArrivee: donnees?.dateArrivee,
-    marchandisesCount: donnees?.marchandises?.length
+    dataKeys: donnees ? Object.keys(donnees) : []
   });
 
   if (!donnees) {
@@ -378,67 +372,79 @@ function validerDonneesManifeste(donnees) {
     return erreurs;
   }
 
-  // ✅ Validation champs obligatoires pour Kit MuleSoft
-  if (!donnees.numeroManifeste) {
-    erreurs.push('numeroManifeste OBLIGATOIRE pour Kit MuleSoft - veuillez saisir un numéro de manifeste');
-  } else if (typeof donnees.numeroManifeste !== 'string' || donnees.numeroManifeste.trim() === '') {
-    erreurs.push('numeroManifeste doit être une chaîne non vide pour Kit MuleSoft');
-  }
-
-  if (!donnees.transporteur) {
-    erreurs.push('transporteur OBLIGATOIRE pour Kit MuleSoft - veuillez saisir le nom du transporteur');
-  } else if (typeof donnees.transporteur !== 'string' || donnees.transporteur.trim() === '') {
-    erreurs.push('transporteur doit être une chaîne non vide pour Kit MuleSoft');
-  }
-
-  if (!donnees.dateArrivee) {
-    erreurs.push('dateArrivee OBLIGATOIRE pour Kit MuleSoft - veuillez sélectionner une date');
+  if (format === 'UEMOA') {
+    // ✅ Validation format UEMOA
+    console.log('🔍 [PAYS A] Validation UEMOA:', {
+      numero_manif: donnees.numero_manif,
+      consignataire: donnees.consignataire,
+      date_arrivee: donnees.date_arrivee,
+      articles: donnees.articles?.length
+    });
+    
+    if (!donnees.numero_manif) {
+      erreurs.push('numero_manif requis pour Kit MuleSoft UEMOA - veuillez saisir un numéro de manifeste');
+    }
+    
+    if (!donnees.consignataire || typeof donnees.consignataire !== 'string' || donnees.consignataire.trim() === '') {
+      erreurs.push('consignataire requis pour Kit MuleSoft UEMOA - veuillez vérifier le champ consignataire');
+    }
+    
+    if (!donnees.date_arrivee) {
+      erreurs.push('date_arrivee requis pour Kit MuleSoft UEMOA - veuillez sélectionner une date');
+    }
+    
+    if (!donnees.articles || !Array.isArray(donnees.articles)) {
+      erreurs.push('articles doit être un tableau pour Kit MuleSoft UEMOA');
+    } else if (donnees.articles.length === 0) {
+      erreurs.push('Au moins un article requis pour Kit MuleSoft UEMOA');
+    } else {
+      donnees.articles.forEach((article, index) => {
+        const prefix = `Article ${index + 1} (UEMOA)`;
+        
+        if (!article.pays_dest || typeof article.pays_dest !== 'string' || article.pays_dest.trim() === '') {
+          erreurs.push(`${prefix}: pays_dest requis pour routing Kit MuleSoft - veuillez sélectionner le pays de destination`);
+        }
+        
+        if (!article.marchandise || typeof article.marchandise !== 'string' || article.marchandise.trim() === '') {
+          erreurs.push(`${prefix}: marchandise requise pour Kit MuleSoft - veuillez saisir la description de la marchandise`);
+        }
+      });
+    }
+    
   } else {
-    const dateArrivee = new Date(donnees.dateArrivee);
-    if (isNaN(dateArrivee.getTime())) {
-      erreurs.push('Format dateArrivee invalide pour Kit MuleSoft - format attendu: YYYY-MM-DD');
+    // ✅ Validation format legacy (code existant)
+    const numeroManifeste = donnees.numeroManifeste;
+    if (!numeroManifeste) {
+      erreurs.push('numeroManifeste requis pour Kit MuleSoft - veuillez vérifier le champ numéro de manifeste');
+    }
+    
+    if (!donnees.transporteur || typeof donnees.transporteur !== 'string' || donnees.transporteur.trim() === '') {
+      erreurs.push('transporteur requis pour Kit MuleSoft - veuillez vérifier le champ transporteur');
+    }
+    
+    if (!donnees.marchandises || !Array.isArray(donnees.marchandises)) {
+      erreurs.push('marchandises doit être un tableau pour Kit MuleSoft');
+    } else if (donnees.marchandises.length === 0) {
+      erreurs.push('Au moins une marchandise requise pour Kit MuleSoft');
+    } else {
+      donnees.marchandises.forEach((marchandise, index) => {
+        const prefix = `Marchandise ${index + 1}`;
+        
+        if (!marchandise.paysDestination || typeof marchandise.paysDestination !== 'string' || marchandise.paysDestination.trim() === '') {
+          erreurs.push(`${prefix}: paysDestination requis pour routing Kit MuleSoft`);
+        }
+        
+        if (!marchandise.designation || typeof marchandise.designation !== 'string' || marchandise.designation.trim() === '') {
+          erreurs.push(`${prefix}: designation requise pour Kit MuleSoft`);
+        }
+      });
     }
   }
 
-  // ✅ Validation marchandises CRITIQUE pour Kit MuleSoft
-  if (!donnees.marchandises || !Array.isArray(donnees.marchandises)) {
-    erreurs.push('marchandises doit être un tableau pour Kit MuleSoft');
-  } else if (donnees.marchandises.length === 0) {
-    erreurs.push('Au moins une marchandise OBLIGATOIRE pour Kit MuleSoft');
-  } else {
-    donnees.marchandises.forEach((marchandise, index) => {
-      const prefix = `Marchandise ${index + 1} (Kit MuleSoft)`;
-      
-      // paysDestination OBLIGATOIRE pour routing Kit
-      if (!marchandise.paysDestination) {
-        erreurs.push(`${prefix}: paysDestination OBLIGATOIRE pour routing Kit MuleSoft - veuillez sélectionner le pays de destination`);
-      } else if (typeof marchandise.paysDestination !== 'string' || marchandise.paysDestination.trim() === '') {
-        erreurs.push(`${prefix}: paysDestination doit être une chaîne non vide pour Kit MuleSoft`);
-      }
-      
-      // designation obligatoire
-      if (!marchandise.designation) {
-        erreurs.push(`${prefix}: designation OBLIGATOIRE pour Kit MuleSoft - veuillez saisir la description de la marchandise`);
-      } else if (typeof marchandise.designation !== 'string' || marchandise.designation.trim() === '') {
-        erreurs.push(`${prefix}: designation doit être une chaîne non vide pour Kit MuleSoft`);
-      }
-      
-      // poidsBrut doit être numérique
-      if (marchandise.poidsBrut !== undefined && (isNaN(parseFloat(marchandise.poidsBrut)) || parseFloat(marchandise.poidsBrut) <= 0)) {
-        erreurs.push(`${prefix}: poidsBrut doit être un nombre positif pour Kit MuleSoft`);
-      }
-      
-      // nombreColis doit être entier positif
-      if (marchandise.nombreColis !== undefined && (isNaN(parseInt(marchandise.nombreColis)) || parseInt(marchandise.nombreColis) <= 0)) {
-        erreurs.push(`${prefix}: nombreColis doit être un entier positif pour Kit MuleSoft`);
-      }
-    });
-  }
-
   if (erreurs.length > 0) {
-    console.error(`❌ [PAYS A] Validation Kit MuleSoft échouée (${erreurs.length} erreurs):`, erreurs);
+    console.error(`❌ [PAYS A] Validation ${format} échouée (${erreurs.length} erreurs):`, erreurs);
   } else {
-    console.log(`✅ [PAYS A] Validation Kit MuleSoft réussie - Prêt pour transmission`);
+    console.log(`✅ [PAYS A] Validation ${format} réussie - Prêt pour transmission`);
   }
 
   return erreurs;

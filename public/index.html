@@ -889,207 +889,261 @@
 
         // ✅ CRÉATION DE MANIFESTE AVEC NOUVEAU FORMAT UEMOA
         async function creerManifeste(event) {
-            event.preventDefault();
+    event.preventDefault();
+    
+    const submitBtn = document.getElementById('btn-submit');
+    if (!submitBtn) {
+        console.error('Bouton submit introuvable');
+        return;
+    }
+    
+    const originalText = submitBtn.innerHTML;
+    
+    // Disable button et show loading
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading"></div> Transmission en cours...';
+    
+    try {
+        console.log('📋 [Frontend] DÉBUT collecte données FORMAT UEMOA du formulaire...');
+        
+        // ✅ CORRECTION MAJEURE : Collecte des champs UEMOA EXACTS du HTML
+        const anneeManif = getFieldValue('annee_manif');
+        const bureauManif = getFieldValue('bureau_manif');
+        const numeroManif = getFieldValue('numero_manif');
+        const codeCgt = getFieldValue('code_cgt');
+        const consignataire = getFieldValue('consignataire');
+        const repertoire = getFieldValue('repertoire');
+        const navire = getFieldValue('navire');
+        const provenance = getFieldValue('provenance');
+        const pavillon = getFieldValue('pavillon');
+        const dateArrivee = getFieldValue('date_arrivee');
+        const valapprox = getFieldValue('valapprox', '0');
+        
+        console.log('🔍 [Frontend] Données UEMOA principales collectées:', {
+            anneeManif: `"${anneeManif}"`,
+            bureauManif: `"${bureauManif}"`,
+            numeroManif: `"${numeroManif}"`,
+            consignataire: `"${consignataire}"`,
+            navire: `"${navire}"`,
+            dateArrivee: `"${dateArrivee}"`
+        });
+        
+        // ✅ Collecte des articles UEMOA depuis le DOM
+        const articles = [];
+        const articleSections = document.querySelectorAll('.article-section');
+        
+        console.log(`🔍 [Frontend] Nombre d'articles trouvés: ${articleSections.length}`);
+        
+        articleSections.forEach((section, index) => {
+            console.log(`🔍 [Frontend] Traitement article ${index + 1}...`);
             
-            const submitBtn = document.getElementById('btn-submit');
-            if (!submitBtn) {
-                console.error('Bouton submit introuvable');
-                return;
-            }
+            const article = {
+                art: parseInt(section.querySelector('input[name="art"]')?.value) || (index + 1),
+                prec1: parseInt(section.querySelector('input[name="prec1"]')?.value) || 0,
+                prec2: parseInt(section.querySelector('input[name="prec2"]')?.value) || 0,
+                date_emb: section.querySelector('input[name="date_emb"]')?.value || dateArrivee,
+                lieu_emb: section.querySelector('input[name="lieu_emb"]')?.value || provenance,
+                pays_dest: section.querySelector('select[name="pays_dest"]')?.value || '',
+                ville_dest: section.querySelector('input[name="ville_dest"]')?.value || '',
+                connaissement: section.querySelector('input[name="connaissement"]')?.value || '',
+                expediteur: section.querySelector('input[name="expediteur"]')?.value || '',
+                destinataire: section.querySelector('input[name="destinataire"]')?.value || '',
+                voie_dest: section.querySelector('input[name="voie_dest"]')?.value || '',
+                ordre: section.querySelector('input[name="ordre"]')?.value || '',
+                marchandise: section.querySelector('input[name="marchandise"]')?.value || '',
+                poids: parseFloat(section.querySelector('input[name="poids"]')?.value) || 0,
+                nbre_colis: parseInt(section.querySelector('input[name="nbre_colis"]')?.value) || 1,
+                marque: section.querySelector('input[name="marque"]')?.value || 'NM',
+                mode_cond: section.querySelector('input[name="mode_cond"]')?.value || 'COLIS (PACKAGE)',
+                nbre_conteneur: parseInt(section.querySelector('input[name="nbre_conteneur"]')?.value) || 1,
+                conteneurs: []
+            };
             
-            const originalText = submitBtn.innerHTML;
+            console.log(`🔍 [Frontend] Article ${index + 1} - pays_dest: "${article.pays_dest}", marchandise: "${article.marchandise}"`);
             
-            // Disable button et show loading
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="loading"></div> Transmission en cours...';
-            
-            try {
-                // ✅ COLLECTE ULTRA-SÉCURISÉE DES DONNÉES avec logging détaillé
-                console.log('📋 [Frontend] Collecte des données du formulaire...');
-                
-                // ✅ Collecte des champs principaux
-                const numeroManifeste = getFieldValue('numeroManifeste');
-                const transporteur = getFieldValue('transporteur');
-                const navire = getFieldValue('navire');
-                const portEmbarquement = getFieldValue('portEmbarquement', 'ROTTERDAM');
-                const portDebarquement = getFieldValue('portDebarquement', 'ABIDJAN');
-                const dateArrivee = getFieldValue('dateArrivee');
-                
-                // ✅ Collecte des données marchandise
-                const codeSH = getFieldValue('codeSH', '8703.21.10');
-                const designation = getFieldValue('designation');
-                const poidsBrut = parseFloat(getFieldValue('poidsBrut', '0')) || 0;
-                const nombreColis = parseInt(getFieldValue('nombreColis', '1')) || 1;
-                const destinataire = getFieldValue('destinataire');
-                const paysDestination = getFieldValue('paysDestination');
-                
-                console.log('🔍 [Frontend] Données collectées:', {
-                    numeroManifeste: `"${numeroManifeste}" (${typeof numeroManifeste})`,
-                    transporteur: `"${transporteur}" (${typeof transporteur})`,
-                    dateArrivee: `"${dateArrivee}" (${typeof dateArrivee})`,
-                    designation: `"${designation}" (${typeof designation})`,
-                    paysDestination: `"${paysDestination}" (${typeof paysDestination})`
-                });
-                
-                // ✅ Construction du payload avec structure correcte pour le backend
-                const manifeste = {
-                    // ✅ Champs principaux OBLIGATOIRES
-                    numeroManifeste: numeroManifeste || null,
-                    transporteur: transporteur || null,
-                    dateArrivee: dateArrivee || null,
-                    
-                    // ✅ Champs optionnels avec valeurs par défaut
-                    navire: navire || 'MARCO POLO',
-                    portEmbarquement: portEmbarquement || 'ROTTERDAM',
-                    portDebarquement: portDebarquement || 'ABIDJAN',
-                    
-                    // ✅ Marchandises au format tableau (CRITIQUE pour Kit MuleSoft)
-                    marchandises: [{
-                        codeSH: codeSH || '8703.21.10',
-                        designation: designation || null,
-                        poidsBrut: poidsBrut,
-                        nombreColis: nombreColis,
-                        destinataire: destinataire || null,
-                        paysDestination: paysDestination || null
-                    }]
+            // Collecte des conteneurs pour cet article
+            const conteneurSections = section.querySelectorAll('.conteneur-section');
+            conteneurSections.forEach(conteneurSection => {
+                const conteneur = {
+                    conteneur: conteneurSection.querySelector('input[name="conteneur"]')?.value || '',
+                    type: conteneurSection.querySelector('select[name="type"]')?.value || 'DRS',
+                    taille: conteneurSection.querySelector('select[name="taille"]')?.value || '40',
+                    plomb: conteneurSection.querySelector('input[name="plomb"]')?.value || ''
                 };
-                
-                console.log('📦 [Frontend] Payload final construit:', JSON.stringify(manifeste, null, 2));
-                
-                // ✅ Validation basique côté frontend avant envoi
-                const validationErrors = [];
-                
-                if (!manifeste.numeroManifeste || manifeste.numeroManifeste.trim() === '') {
-                    validationErrors.push('Numéro de manifeste obligatoire');
-                }
-                
-                if (!manifeste.transporteur || manifeste.transporteur.trim() === '') {
-                    validationErrors.push('Transporteur obligatoire');
-                }
-                
-                if (!manifeste.dateArrivee) {
-                    validationErrors.push('Date d\'arrivée obligatoire');
-                }
-                
-                if (!manifeste.marchandises[0].designation || manifeste.marchandises[0].designation.trim() === '') {
-                    validationErrors.push('Description de la marchandise obligatoire');
-                }
-                
-                if (!manifeste.marchandises[0].paysDestination || manifeste.marchandises[0].paysDestination.trim() === '') {
-                    validationErrors.push('Pays de destination obligatoire');
-                }
-                
-                if (validationErrors.length > 0) {
-                    console.error('❌ [Frontend] Validation échouée:', validationErrors);
-                    throw new Error('Validation échouée: ' + validationErrors.join(', '));
-                }
-                
-                console.log('✅ [Frontend] Validation réussie, envoi vers backend...');
-                ajouterInteraction('📋 Création manifeste', 
-                    `${manifeste.numeroManifeste} vers ${manifeste.marchandises[0].paysDestination}`);
-                
-                // ✅ APPEL API ULTRA-SÉCURISÉ avec headers corrects
-                const response = await fetch(API_BASE + '/manifeste/creer', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Source-Country': 'CIV',
-                        'X-Source-System': 'PAYS_A_FRONTEND',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(manifeste),
-                    signal: AbortSignal.timeout(60000)
-                });
-                
-                console.log(`🌐 [Frontend] Réponse HTTP: ${response.status} ${response.statusText}`);
-                
-                if (!response.ok) {
-                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                    try {
-                        const errorText = await response.text();
-                        const errorJson = JSON.parse(errorText);
-                        errorMessage = getValue(errorJson, 'message', errorMessage);
-                        console.error('❌ [Frontend] Erreur serveur:', errorJson);
-                    } catch (parseError) {
-                        console.warn('⚠️ [Frontend] Impossible de parser l\'erreur serveur');
-                    }
-                    throw new Error(errorMessage);
-                }
-                
-                const result = await response.json();
-                console.log('📋 [Frontend] Résultat backend:', getValue(result, 'status', 'UNKNOWN'));
-                console.log('📋 [Frontend] Réponse complète:', JSON.stringify(result, null, 2));
-                
-                // ✅ TRAITEMENT ULTRA-SÉCURISÉ DU RÉSULTAT
-                const resultStatus = getValue(result, 'status', 'UNKNOWN');
-                
-                if (resultStatus === 'SUCCESS') {
-                    afficherNotification('✅ Manifeste créé et transmis au Kit avec succès!', 'success');
-                    
-                    // ✅ GESTION ULTRA-SÉCURISÉE DE LA LATENCE
-                    const latence = getValue(result, 'transmissionKit.succes.latence', null) ||
-                                   getValue(result, 'transmission.latence', null) ||
-                                   getValue(result, 'transmissionKit.latence', null) ||
-                                   getValue(result, 'metadata.duration', null) ||
-                                   'N/A';
-                    
-                    const manifesteId = getValue(result, 'manifeste.id', null) ||
-                                       getValue(result, 'manifeste.numeroManifeste', null) ||
-                                       manifeste.numeroManifeste ||
-                                       'ID inconnu';
-                    
-                    ajouterInteraction('🚀 Transmission Kit', 
-                        `✅ Succès - ${manifesteId} (${latence}ms)`);
-                    
-                    // Reset form
-                    resetForm();
-                    
-                } else if (resultStatus === 'PARTIAL_SUCCESS') {
-                    afficherNotification('⚠️ Manifeste créé localement mais erreur transmission Kit', 'warning');
-                    
-                    // ✅ GESTION ULTRA-SÉCURISÉE DES ERREURS
-                    const erreur = getValue(result, 'transmissionKit.echec.erreur', null) ||
-                                  getValue(result, 'transmission.erreur', null) ||
-                                  getValue(result, 'erreur', null) ||
-                                  'Erreur de transmission inconnue';
-                    
-                    ajouterInteraction('🚀 Transmission Kit', `⚠️ Partiel - ${erreur}`);
-                } else {
-                    const errorMessage = getValue(result, 'message', 'Erreur inconnue du serveur');
-                    console.error('❌ [Frontend] Statut inattendu:', resultStatus, result);
-                    throw new Error(errorMessage);
-                }
-                
-                // ✅ ACTUALISATION FORCÉE SÉCURISÉE
-                console.log('🔄 [Frontend] Actualisation forcée des statistiques...');
-                try {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    await Promise.allSettled([
-                        chargerStatistiques().catch(err => console.warn('Erreur stats:', err)),
-                        chargerManifestes().catch(err => console.warn('Erreur manifestes:', err))
-                    ]);
-                    console.log('✅ [Frontend] Actualisation terminée');
-                } catch (refreshError) {
-                    console.warn('Erreur actualisation:', refreshError);
-                }
-                
-            } catch (error) {
-                console.error('❌ [Frontend] Erreur création manifeste:', error);
-                const errorMessage = error.message || 'Erreur inconnue';
-                afficherNotification('❌ Erreur: ' + errorMessage, 'error');
-                ajouterInteraction('📋 Création manifeste', `❌ Erreur: ${errorMessage}`);
-            } finally {
-                // ✅ RESTORE BUTTON TOUJOURS
-                try {
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    }
-                } catch (restoreError) {
-                    console.warn('Erreur restauration bouton:', restoreError);
-                }
-            }
+                article.conteneurs.push(conteneur);
+            });
+            
+            articles.push(article);
+        });
+        
+        // ✅ Construction du payload FORMAT UEMOA
+        const manifesteUEMOA = {
+            annee_manif: anneeManif,
+            bureau_manif: bureauManif,
+            numero_manif: parseInt(numeroManif) || Date.now(),
+            code_cgt: codeCgt,
+            consignataire: consignataire,
+            repertoire: repertoire,
+            navire: navire,
+            provenance: provenance,
+            pavillon: pavillon,
+            date_arrivee: dateArrivee,
+            valapprox: parseFloat(valapprox) || 0,
+            nbre_article: articles.length,
+            articles: articles
+        };
+        
+        console.log('📦 [Frontend] Payload UEMOA final construit:', JSON.stringify(manifesteUEMOA, null, 2));
+        
+        // ✅ VALIDATION FORMAT UEMOA CORRIGÉE - Correspondant aux champs RÉELS du HTML
+        const validationErrors = [];
+        
+        console.log('🔍 [Frontend] DÉBUT validation UEMOA...');
+        
+        // Validation champs principaux UEMOA
+        if (!manifesteUEMOA.numero_manif || manifesteUEMOA.numero_manif === 0) {
+            validationErrors.push('Numéro de manifeste UEMOA obligatoire (numero_manif)');
+            console.error('❌ [Frontend] numero_manif manquant:', manifesteUEMOA.numero_manif);
         }
+        
+        if (!manifesteUEMOA.consignataire || manifesteUEMOA.consignataire.trim() === '') {
+            validationErrors.push('Consignataire UEMOA obligatoire');
+            console.error('❌ [Frontend] consignataire manquant:', manifesteUEMOA.consignataire);
+        }
+        
+        if (!manifesteUEMOA.date_arrivee) {
+            validationErrors.push('Date d\'arrivée UEMOA obligatoire');
+            console.error('❌ [Frontend] date_arrivee manquante:', manifesteUEMOA.date_arrivee);
+        }
+        
+        if (manifesteUEMOA.articles.length === 0) {
+            validationErrors.push('Au moins un article UEMOA obligatoire');
+            console.error('❌ [Frontend] Aucun article trouvé');
+        } else {
+            // Validation des articles
+            manifesteUEMOA.articles.forEach((article, index) => {
+                console.log(`🔍 [Frontend] Validation article ${index + 1}:`, article);
+                
+                if (!article.marchandise || article.marchandise.trim() === '') {
+                    validationErrors.push(`Description de la marchandise obligatoire pour l'article ${index + 1}`);
+                    console.error(`❌ [Frontend] Article ${index + 1} - marchandise manquante:`, article.marchandise);
+                }
+                
+                if (!article.pays_dest || article.pays_dest.trim() === '') {
+                    validationErrors.push(`Pays de destination obligatoire pour l'article ${index + 1}`);
+                    console.error(`❌ [Frontend] Article ${index + 1} - pays_dest manquant:`, article.pays_dest);
+                }
+            });
+        }
+        
+        if (validationErrors.length > 0) {
+            console.error('❌ [Frontend] Validation UEMOA échouée:', validationErrors);
+            throw new Error('Validation échouée: ' + validationErrors.join(', '));
+        }
+        
+        console.log('✅ [Frontend] Validation UEMOA réussie, envoi vers backend...');
+        ajouterInteraction('📋 Création manifeste UEMOA', 
+            `N°${manifesteUEMOA.numero_manif} (${manifesteUEMOA.annee_manif}) - ${manifesteUEMOA.consignataire} vers ${manifesteUEMOA.articles.map(a => a.pays_dest).join(', ')}`);
+        
+        // ✅ APPEL API avec timeout amélioré
+        const response = await fetch(API_BASE + '/manifeste/creer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Source-Country': 'CIV',
+                'X-Source-System': 'PAYS_A_FRONTEND',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(manifesteUEMOA),
+            signal: AbortSignal.timeout(90000) // ✅ 90 secondes pour CloudHub
+        });
+        
+        console.log(`🌐 [Frontend] Réponse HTTP: ${response.status} ${response.statusText}`);
+        
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            try {
+                const errorText = await response.text();
+                const errorJson = JSON.parse(errorText);
+                errorMessage = getValue(errorJson, 'message', errorMessage);
+                console.error('❌ [Frontend] Erreur serveur:', errorJson);
+            } catch (parseError) {
+                console.warn('⚠️ [Frontend] Impossible de parser l\'erreur serveur');
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const result = await response.json();
+        console.log('📋 [Frontend] Résultat backend:', getValue(result, 'status', 'UNKNOWN'));
+        console.log('📋 [Frontend] Réponse complète:', JSON.stringify(result, null, 2));
+        
+        // ✅ TRAITEMENT ULTRA-SÉCURISÉ DU RÉSULTAT
+        const resultStatus = getValue(result, 'status', 'UNKNOWN');
+        
+        if (resultStatus === 'SUCCESS') {
+            afficherNotification('✅ Manifeste UEMOA créé et transmis au Kit avec succès!', 'success');
+            
+            const latence = getValue(result, 'transmissionKit.succes.latence', null) ||
+                           getValue(result, 'transmission.latence', null) ||
+                           getValue(result, 'transmissionKit.latence', null) ||
+                           'N/A';
+            
+            const manifesteId = getValue(result, 'manifeste.id', null) ||
+                               getValue(result, 'manifeste.numero_manif', null) ||
+                               manifesteUEMOA.numero_manif ||
+                               'ID inconnu';
+            
+            ajouterInteraction('🚀 Transmission Kit UEMOA', 
+                `✅ Succès - N°${manifesteId} (${latence}ms)`);
+            
+            // Reset form
+            resetForm();
+            
+        } else if (resultStatus === 'PARTIAL_SUCCESS') {
+            afficherNotification('⚠️ Manifeste UEMOA créé localement mais erreur transmission Kit', 'warning');
+            
+            const erreur = getValue(result, 'transmissionKit.echec.erreur', null) ||
+                          getValue(result, 'transmission.erreur', null) ||
+                          getValue(result, 'erreur', null) ||
+                          'Erreur de transmission inconnue';
+            
+            ajouterInteraction('🚀 Transmission Kit UEMOA', `⚠️ Partiel - ${erreur}`);
+        } else {
+            const errorMessage = getValue(result, 'message', 'Erreur inconnue du serveur');
+            console.error('❌ [Frontend] Statut inattendu:', resultStatus, result);
+            throw new Error(errorMessage);
+        }
+        
+        // ✅ ACTUALISATION FORCÉE SÉCURISÉE
+        console.log('🔄 [Frontend] Actualisation forcée des statistiques...');
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await Promise.allSettled([
+                chargerStatistiques().catch(err => console.warn('Erreur stats:', err)),
+                chargerManifestes().catch(err => console.warn('Erreur manifestes:', err))
+            ]);
+            console.log('✅ [Frontend] Actualisation terminée');
+        } catch (refreshError) {
+            console.warn('Erreur actualisation:', refreshError);
+        }
+        
+    } catch (error) {
+        console.error('❌ [Frontend] Erreur création manifeste:', error);
+        const errorMessage = error.message || 'Erreur inconnue';
+        afficherNotification('❌ Erreur: ' + errorMessage, 'error');
+        ajouterInteraction('📋 Création manifeste UEMOA', `❌ Erreur: ${errorMessage}`);
+    } finally {
+        // ✅ RESTORE BUTTON TOUJOURS
+        try {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (restoreError) {
+            console.warn('Erreur restauration bouton:', restoreError);
+        }
+    }
+}
 
         // ✅ RESET FORM SÉCURISÉ
         function resetForm() {
