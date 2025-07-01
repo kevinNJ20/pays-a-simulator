@@ -414,6 +414,40 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Styles pour la section apurement */
+        #apurement-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196f3;
+        }
+
+        #apurement-section h2 {
+            color: #1976d2;
+        }
+
+        #apurement-section .form-section {
+            background: white;
+        }
+
+        #apurement-section .manifeste-item {
+            background: #f3e5f5;
+            border-left-color: #9c27b0;
+        }
+
+        #apurement-success h3 {
+            margin-bottom: 0;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
         @media (max-width: 768px) {
             .main {
                 grid-template-columns: 1fr;
@@ -618,6 +652,88 @@
                 <button class="btn btn-test" onclick="chargerManifestes()" style="width: 100%; margin-top: 15px;">
                     🔄 Actualiser
                 </button>
+            </section>
+
+            <!-- Section Apurement et Levée -->
+            <section class="card full-width" id="apurement-section" style="display: none;">
+                <h2>🔓 Apurement et Levée des Marchandises</h2>
+                <div class="form-section">
+                    <h3>📋 Confirmation de Recouvrement et Apurement</h3>
+                    <div id="apurement-info" style="display: none;">
+                        <div class="manifeste-item transmitted">
+                            <div class="manifeste-header">
+                                Manifeste: <span id="apu-numero-manifeste">--</span>
+                            </div>
+                            <div class="manifeste-details">
+                                🚢 Navire: <span id="apu-navire">--</span><br>
+                                🏢 Transporteur: <span id="apu-transporteur">--</span><br>
+                                💰 Montant acquitté: <span id="apu-montant">--</span> FCFA<br>
+                                🏳️ Pays déclarant: <span id="apu-pays">--</span><br>
+                                📅 Date mainlevée: <span id="apu-date-mainlevee">--</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row" style="margin-top: 20px;">
+                            <div>
+                                <label for="type-confirmation">Type de Confirmation:</label>
+                                <select id="type-confirmation" class="form-control">
+                                    <option value="DOUANE">Confirmation Douane</option>
+                                    <option value="BCEAO">Confirmation BCEAO</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="agent-confirmation">Agent de Confirmation:</label>
+                                <input type="text" id="agent-confirmation" class="form-control" placeholder="Nom de l'agent" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row single" style="margin-top: 15px;">
+                            <div>
+                                <label for="observations">Observations:</label>
+                                <textarea id="observations" class="form-control" rows="3" placeholder="Observations éventuelles..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="confirmerApurement()" id="btn-confirmer-apurement">
+                                ✅ Confirmer l'Apurement et la Levée
+                            </button>
+                            <button class="btn btn-secondary" onclick="fermerApurement()" style="margin-left: 10px;">
+                                ❌ Annuler
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="apurement-loading" style="display: none; text-align: center; padding: 40px;">
+                        <div class="loading"></div>
+                        <p style="margin-top: 20px;">Chargement des informations d'apurement...</p>
+                    </div>
+                    
+                    <div id="apurement-error" style="display: none; text-align: center; padding: 40px;">
+                        <p style="color: #dc3545;">❌ <span id="apurement-error-message">Erreur de chargement</span></p>
+                        <button class="btn btn-secondary" onclick="fermerApurement()" style="margin-top: 20px;">
+                            Fermer
+                        </button>
+                    </div>
+                    
+                    <div id="apurement-success" style="display: none; text-align: center; padding: 40px;">
+                        <h3 style="color: #28a745;">✅ Apurement Confirmé avec Succès!</h3>
+                        <p style="margin-top: 20px;">
+                            Le manifeste <strong id="success-manifeste">--</strong> a été apuré et les marchandises peuvent être levées.
+                        </p>
+                        <div class="manifeste-item transmitted" style="margin: 20px auto; max-width: 600px;">
+                            <div class="manifeste-details">
+                                📋 Référence apurement: <span id="success-ref-apurement">--</span><br>
+                                🔓 Type confirmation: <span id="success-type-confirmation">--</span><br>
+                                👤 Agent: <span id="success-agent">--</span><br>
+                                📅 Date apurement: <span id="success-date">--</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="fermerApurement()" style="margin-top: 20px;">
+                            ✅ Terminer
+                        </button>
+                    </div>
+                </div>
             </section>
 
             <!-- Interactions Kit en temps réel -->
@@ -1520,7 +1636,7 @@
                 
                 const duration = safeType === 'error' ? 7000 : safeType === 'warning' ? 5000 : 3000;
                 
-                setTimeout(function() {
+                setTimeout(() => {
                     try {
                         notification.classList.remove('show');
                     } catch (hideError) {
@@ -1532,8 +1648,206 @@
             }
         }
 
+        // ✅ NOUVELLES FONCTIONS POUR L'APUREMENT
+        
+        // Ouvrir l'interface d'apurement (appelée depuis Pays B)
+        window.ouvrirApurement = async function(numeroManifeste, referencePaiement) {
+            console.log('🔓 [Pays A] Ouverture interface apurement:', { numeroManifeste, referencePaiement });
+            
+            // Afficher la section apurement
+            document.getElementById('apurement-section').style.display = 'block';
+            
+            // Masquer toutes les sous-sections
+            document.getElementById('apurement-info').style.display = 'none';
+            document.getElementById('apurement-loading').style.display = 'block';
+            document.getElementById('apurement-error').style.display = 'none';
+            document.getElementById('apurement-success').style.display = 'none';
+            
+            // Stocker les références
+            window.apurementData = { numeroManifeste, referencePaiement };
+            
+            // Faire défiler jusqu'à la section
+            document.getElementById('apurement-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            try {
+                // Charger les informations d'apurement
+                const response = await fetch(`${API_BASE}/apurement/traiter?numeroManifeste=${numeroManifeste}&referencePaiement=${referencePaiement}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Source-System': 'PAYS_A_FRONTEND',
+                        'X-Source-Country': 'CIV'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('📋 [Pays A] Données apurement reçues:', result);
+                
+                if (result.status === 'SUCCESS' && result.data) {
+                    const data = result.data;
+                    
+                    // Vérifier si déjà apuré
+                    if (data.apurement) {
+                        throw new Error('Ce manifeste a déjà été apuré le ' + new Date(data.apurement.dateApurement).toLocaleString('fr-FR'));
+                    }
+                    
+                    // Vérifier si peut être apuré
+                    if (!data.peutEtreApure) {
+                        throw new Error('Ce manifeste ne peut pas être apuré. Statut actuel: ' + data.manifeste.statut);
+                    }
+                    
+                    // Remplir les informations
+                    document.getElementById('apu-numero-manifeste').textContent = data.manifeste.numero;
+                    document.getElementById('apu-navire').textContent = data.manifeste.navire;
+                    document.getElementById('apu-transporteur').textContent = data.manifeste.transporteur;
+                    document.getElementById('apu-montant').textContent = data.autorisation.montant.toLocaleString();
+                    document.getElementById('apu-pays').textContent = data.autorisation.paysDeclarant;
+                    document.getElementById('apu-date-mainlevee').textContent = new Date(data.autorisation.dateReception).toLocaleString('fr-FR');
+                    
+                    // Réinitialiser le formulaire
+                    document.getElementById('type-confirmation').value = 'DOUANE';
+                    document.getElementById('agent-confirmation').value = '';
+                    document.getElementById('observations').value = '';
+                    
+                    // Afficher le formulaire
+                    document.getElementById('apurement-loading').style.display = 'none';
+                    document.getElementById('apurement-info').style.display = 'block';
+                    
+                    ajouterInteraction('🔓 Apurement', `Interface apurement ouverte pour manifeste ${numeroManifeste}`);
+                    
+                } else {
+                    throw new Error('Données apurement invalides');
+                }
+                
+            } catch (error) {
+                console.error('❌ [Pays A] Erreur chargement apurement:', error);
+                document.getElementById('apurement-loading').style.display = 'none';
+                document.getElementById('apurement-error').style.display = 'block';
+                document.getElementById('apurement-error-message').textContent = error.message;
+                ajouterInteraction('❌ Apurement', `Erreur: ${error.message}`);
+            }
+        };
+        
+        // Confirmer l'apurement
+        async function confirmerApurement() {
+            const btnConfirmer = document.getElementById('btn-confirmer-apurement');
+            const originalText = btnConfirmer.innerHTML;
+            
+            try {
+                // Validation
+                const agentConfirmation = document.getElementById('agent-confirmation').value.trim();
+                if (!agentConfirmation) {
+                    throw new Error('Veuillez saisir le nom de l\'agent de confirmation');
+                }
+                
+                // Désactiver le bouton
+                btnConfirmer.disabled = true;
+                btnConfirmer.innerHTML = '<div class="loading"></div> Traitement en cours...';
+                
+                // Préparer les données
+                const apurementPayload = {
+                    numeroManifeste: window.apurementData.numeroManifeste,
+                    referencePaiement: window.apurementData.referencePaiement,
+                    typeConfirmation: document.getElementById('type-confirmation').value,
+                    agentConfirmation: agentConfirmation,
+                    observations: document.getElementById('observations').value.trim()
+                };
+                
+                console.log('📤 [Pays A] Envoi apurement:', apurementPayload);
+                
+                // Appel API
+                const response = await fetch(`${API_BASE}/apurement/traiter`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Source-System': 'PAYS_A_FRONTEND',
+                        'X-Source-Country': 'CIV',
+                        'X-Payment-Reference': window.apurementData.referencePaiement
+                    },
+                    body: JSON.stringify(apurementPayload)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ [Pays A] Apurement confirmé:', result);
+                
+                if (result.status === 'SUCCESS') {
+                    // Afficher le succès
+                    document.getElementById('apurement-info').style.display = 'none';
+                    document.getElementById('apurement-success').style.display = 'block';
+                    
+                    // Remplir les détails du succès
+                    document.getElementById('success-manifeste').textContent = result.apurement.numeroManifeste;
+                    document.getElementById('success-ref-apurement').textContent = result.apurement.id;
+                    document.getElementById('success-type-confirmation').textContent = result.apurement.typeConfirmation;
+                    document.getElementById('success-agent').textContent = apurementPayload.agentConfirmation;
+                    document.getElementById('success-date').textContent = new Date(result.apurement.dateApurement).toLocaleString('fr-FR');
+                    
+                    afficherNotification('✅ Apurement confirmé avec succès!', 'success');
+                    ajouterInteraction('✅ Apurement', `Manifeste ${result.apurement.numeroManifeste} apuré et levé`);
+                    
+                    // Notifier Pays B si la fenêtre parent existe
+                    if (window.opener && window.opener.notifierApurementReussi) {
+                        window.opener.notifierApurementReussi(result);
+                    }
+                    
+                    // Actualiser les données après 2 secondes
+                    setTimeout(() => {
+                        chargerManifestes();
+                        chargerStatistiques();
+                    }, 2000);
+                    
+                } else {
+                    throw new Error(result.message || 'Erreur lors de l\'apurement');
+                }
+                
+            } catch (error) {
+                console.error('❌ [Pays A] Erreur confirmation apurement:', error);
+                afficherNotification('❌ Erreur: ' + error.message, 'error');
+                ajouterInteraction('❌ Apurement', `Erreur: ${error.message}`);
+            } finally {
+                btnConfirmer.disabled = false;
+                btnConfirmer.innerHTML = originalText;
+            }
+        }
+        
+        // Fermer l'interface d'apurement
+        function fermerApurement() {
+            document.getElementById('apurement-section').style.display = 'none';
+            window.apurementData = null;
+            
+            // Si c'est une fenêtre popup, la fermer
+            if (window.opener) {
+                window.close();
+            }
+        }
+        
+        // Vérifier si on doit ouvrir directement l'apurement (depuis URL)
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const numeroManifeste = urlParams.get('apurement_manifeste');
+            const referencePaiement = urlParams.get('apurement_paiement');
+            
+            if (numeroManifeste && referencePaiement) {
+                console.log('🔓 [Pays A] Ouverture apurement depuis URL');
+                // Attendre un peu que tout soit initialisé
+                setTimeout(() => {
+                    window.ouvrirApurement(numeroManifeste, referencePaiement);
+                }, 1000);
+            }
+        });
+
         // Cleanup
-        window.addEventListener('beforeunload', function() {
+        window.addEventListener('beforeunload', () => {
             try {
                 if (statusInterval) clearInterval(statusInterval);
                 if (refreshInterval) clearInterval(refreshInterval);
