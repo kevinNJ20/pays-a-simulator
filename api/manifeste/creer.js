@@ -238,60 +238,127 @@ module.exports = async (req, res) => {
 
 // ✅ FONCTION DE NETTOYAGE ET NORMALISATION DES DONNÉES
 function nettoyerDonneesManifeste(donnees) {
-  console.log('🧹 [PAYS A] Nettoyage des données d\'entrée...');
-  
-  if (!donnees || typeof donnees !== 'object') {
-    console.warn('⚠️ [PAYS A] Données d\'entrée invalides, utilisation d\'un objet vide');
-    return {};
-  }
-
-  // ✅ Nettoyage et normalisation des champs principaux
-  const donneesNettoyees = {
-    // ✅ Champs obligatoires avec nettoyage
-    numeroManifeste: String(donnees.numeroManifeste || '').trim() || null,
-    transporteur: String(donnees.transporteur || '').trim() || null,
-    dateArrivee: donnees.dateArrivee || null,
+    console.log('🧹 [PAYS A] Nettoyage des données d\'entrée...');
     
-    // ✅ Champs optionnels avec valeurs par défaut
-    navire: String(donnees.navire || '').trim() || 'MARCO POLO',
-    portEmbarquement: String(donnees.portEmbarquement || '').trim() || 'ROTTERDAM',
-    portDebarquement: String(donnees.portDebarquement || '').trim() || 'ABIDJAN',
+    if (!donnees || typeof donnees !== 'object') {
+        console.warn('⚠️ [PAYS A] Données d\'entrée invalides, utilisation d\'un objet vide');
+        return {};
+    }
+
+    // ✅ Détecter le format
+    const formatDetecte = detecterFormatDonnees(donnees);
+    console.log(`🔍 [PAYS A] Format détecté: ${formatDetecte}`);
+
+    if (formatDetecte === 'UEMOA') {
+        // ✅ Données déjà au format UEMOA - nettoyage minimal
+        return {
+            // Champs UEMOA obligatoires
+            annee_manif: String(donnees.annee_manif || new Date().getFullYear()),
+            bureau_manif: String(donnees.bureau_manif || '18N').trim(),
+            numero_manif: parseInt(donnees.numero_manif) || Date.now(),
+            code_cgt: String(donnees.code_cgt || '014').trim(),
+            consignataire: String(donnees.consignataire || '').trim(),
+            repertoire: String(donnees.repertoire || '02402').trim(),
+            
+            // Informations navire
+            navire: String(donnees.navire || 'MARCO POLO').trim(),
+            provenance: String(donnees.provenance || 'ROTTERDAM').trim(),
+            pavillon: String(donnees.pavillon || 'LIBÉRIA').trim(),
+            date_arrivee: donnees.date_arrivee || null,
+            valapprox: parseFloat(donnees.valapprox) || 0,
+            
+            // Articles
+            nbre_article: parseInt(donnees.nbre_article) || (donnees.articles ? donnees.articles.length : 0),
+            articles: Array.isArray(donnees.articles) ? donnees.articles.map(article => ({
+                art: parseInt(article.art) || 1,
+                prec1: parseInt(article.prec1) || 0,
+                prec2: parseInt(article.prec2) || 0,
+                date_emb: article.date_emb || donnees.date_arrivee,
+                lieu_emb: String(article.lieu_emb || '').trim(),
+                pays_dest: String(article.pays_dest || '').trim(),
+                ville_dest: String(article.ville_dest || '').trim(),
+                connaissement: String(article.connaissement || '').trim(),
+                expediteur: String(article.expediteur || '').trim(),
+                destinataire: String(article.destinataire || '').trim(),
+                voie_dest: String(article.voie_dest || '').trim(),
+                ordre: String(article.ordre || '').trim(),
+                marchandise: String(article.marchandise || '').trim(),
+                poids: parseFloat(article.poids) || 0,
+                nbre_colis: parseInt(article.nbre_colis) || 1,
+                marque: String(article.marque || 'NM').trim(),
+                mode_cond: String(article.mode_cond || 'COLIS (PACKAGE)').trim(),
+                nbre_conteneur: parseInt(article.nbre_conteneur) || 1,
+                conteneurs: Array.isArray(article.conteneurs) ? article.conteneurs.map(cont => ({
+                    conteneur: String(cont.conteneur || '').trim(),
+                    type: String(cont.type || 'DRS').trim(),
+                    taille: String(cont.taille || '40').trim(),
+                    plomb: String(cont.plomb || '').trim()
+                })) : []
+            })) : []
+        };
+    } else {
+        // ✅ Format legacy - conversion vers UEMOA
+        const donneesNettoyees = {
+            // ✅ Champs obligatoires avec nettoyage
+            numeroManifeste: String(donnees.numeroManifeste || '').trim() || null,
+            transporteur: String(donnees.transporteur || '').trim() || null,
+            dateArrivee: donnees.dateArrivee || null,
+            
+            // ✅ Champs optionnels avec valeurs par défaut
+            navire: String(donnees.navire || '').trim() || 'MARCO POLO',
+            portEmbarquement: String(donnees.portEmbarquement || '').trim() || 'ROTTERDAM',
+            portDebarquement: String(donnees.portDebarquement || '').trim() || 'ABIDJAN',
+            
+            // ✅ Marchandises avec nettoyage
+            marchandises: []
+        };
+
+        // ✅ Traitement spécial pour les marchandises
+        if (Array.isArray(donnees.marchandises) && donnees.marchandises.length > 0) {
+            donneesNettoyees.marchandises = donnees.marchandises.map((marchandise, index) => ({
+                codeSH: String(marchandise.codeSH || '').trim() || '8703.21.10',
+                designation: String(marchandise.designation || '').trim() || null,
+                poidsBrut: parseFloat(marchandise.poidsBrut) || 0,
+                nombreColis: parseInt(marchandise.nombreColis) || 1,
+                destinataire: String(marchandise.destinataire || '').trim() || null,
+                paysDestination: String(marchandise.paysDestination || '').trim() || null
+            }));
+        } else {
+            // ✅ Créer une marchandise à partir des champs racine pour compatibilité
+            donneesNettoyees.marchandises = [{
+                codeSH: String(donnees.codeSH || '').trim() || '8703.21.10',
+                designation: String(donnees.designation || '').trim() || null,
+                poidsBrut: parseFloat(donnees.poidsBrut) || 0,
+                nombreColis: parseInt(donnees.nombreColis) || 1,
+                destinataire: String(donnees.destinataire || '').trim() || null,
+                paysDestination: String(donnees.paysDestination || '').trim() || null
+            }];
+        }
+
+        return donneesNettoyees;
+    }
+}
+
+function detecterFormatDonnees(donnees) {
+    if (!donnees || typeof donnees !== 'object') return 'UNKNOWN';
     
-    // ✅ Marchandises avec nettoyage
-    marchandises: []
-  };
-
-  // ✅ Traitement spécial pour les marchandises
-  if (Array.isArray(donnees.marchandises) && donnees.marchandises.length > 0) {
-    donneesNettoyees.marchandises = donnees.marchandises.map((marchandise, index) => ({
-      codeSH: String(marchandise.codeSH || '').trim() || '8703.21.10',
-      designation: String(marchandise.designation || '').trim() || null,
-      poidsBrut: parseFloat(marchandise.poidsBrut) || 0,
-      nombreColis: parseInt(marchandise.nombreColis) || 1,
-      destinataire: String(marchandise.destinataire || '').trim() || null,
-      paysDestination: String(marchandise.paysDestination || '').trim() || null
-    }));
-  } else {
-    // ✅ Créer une marchandise à partir des champs racine pour compatibilité
-    donneesNettoyees.marchandises = [{
-      codeSH: String(donnees.codeSH || '').trim() || '8703.21.10',
-      designation: String(donnees.designation || '').trim() || null,
-      poidsBrut: parseFloat(donnees.poidsBrut) || 0,
-      nombreColis: parseInt(donnees.nombreColis) || 1,
-      destinataire: String(donnees.destinataire || '').trim() || null,
-      paysDestination: String(donnees.paysDestination || '').trim() || null
-    }];
-  }
-
-  console.log('✅ [PAYS A] Données nettoyées et normalisées:', {
-    numeroManifeste: donneesNettoyees.numeroManifeste,
-    transporteur: donneesNettoyees.transporteur,
-    dateArrivee: donneesNettoyees.dateArrivee,
-    marchandisesCount: donneesNettoyees.marchandises.length,
-    premiereDestination: donneesNettoyees.marchandises[0]?.paysDestination
-  });
-
-  return donneesNettoyees;
+    // Vérifier si c'est le format UEMOA
+    const champsUEMOA = ['annee_manif', 'bureau_manif', 'numero_manif', 'consignataire', 'articles'];
+    const hasUEMOAFields = champsUEMOA.some(champ => donnees.hasOwnProperty(champ));
+    
+    if (hasUEMOAFields) {
+        return 'UEMOA';
+    }
+    
+    // Vérifier si c'est le format legacy
+    const champsLegacy = ['numeroManifeste', 'transporteur', 'marchandises'];
+    const hasLegacyFields = champsLegacy.some(champ => donnees.hasOwnProperty(champ));
+    
+    if (hasLegacyFields) {
+        return 'LEGACY';
+    }
+    
+    return 'UNKNOWN';
 }
 
 // ✅ Validation stricte pour Kit MuleSoft avec messages d'erreur améliorés

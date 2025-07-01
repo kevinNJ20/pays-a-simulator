@@ -156,154 +156,137 @@ async function verifierStatutKit() {
 
 // ✅ CORRECTION PRINCIPALE : Création de manifeste avec accès ultra-sécurisé
 async function creerManifeste(event) {
-  event.preventDefault();
-  
-  const submitBtn = document.getElementById('btn-submit');
-  if (!submitBtn) return;
-  
-  const originalText = submitBtn.innerHTML;
-  
-  // Disable button et show loading
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<div class="loading"></div> Transmission en cours...';
-  
-  try {
-    // ✅ Collecte ultra-sécurisée des données du formulaire
-    const getElementValue = (id, defaultValue = '') => {
-      try {
-        const element = document.getElementById(id);
-        return element && element.value ? element.value.trim() : defaultValue;
-      } catch (error) {
-        console.warn(`Erreur lecture champ ${id}:`, error);
-        return defaultValue;
-      }
-    };
+    event.preventDefault();
     
-    const manifeste = {
-      numeroManifeste: getElementValue('numeroManifeste'),
-      transporteur: getElementValue('transporteur'),
-      navire: getElementValue('navire'),
-      portEmbarquement: getElementValue('portEmbarquement', 'ROTTERDAM'),
-      portDebarquement: getElementValue('portDebarquement', 'ABIDJAN'),
-      dateArrivee: getElementValue('dateArrivee'),
-      marchandises: [{
-        codeSH: getElementValue('codeSH', '8703.21.10'),
-        designation: getElementValue('designation'),
-        poidsBrut: parseFloat(getElementValue('poidsBrut', '0')) || 0,
-        nombreColis: parseInt(getElementValue('nombreColis', '1')) || 1,
-        destinataire: getElementValue('destinataire'),
-        paysDestination: getElementValue('paysDestination')
-      }]
-    };
+    const submitBtn = document.getElementById('btn-submit');
+    if (!submitBtn) return;
     
-    // Validation basique côté client
-    if (!manifeste.numeroManifeste || !manifeste.transporteur || !manifeste.dateArrivee) {
-      throw new Error('Veuillez remplir tous les champs obligatoires');
-    }
+    const originalText = submitBtn.innerHTML;
     
-    if (!manifeste.marchandises[0].designation || !manifeste.marchandises[0].paysDestination) {
-      throw new Error('Veuillez remplir les informations de marchandise');
-    }
+    // Disable button et show loading
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading"></div> Transmission en cours...';
     
-    console.log('📋 Création manifeste:', manifeste.numeroManifeste);
-    ajouterInteraction('📋 Création manifeste', 
-      `${manifeste.numeroManifeste} vers ${safeGet(manifeste, 'marchandises.0.paysDestination', 'DEST')}`);
-    
-    // ✅ Appel API avec timeout et gestion d'erreur
-    const response = await fetch(`${API_BASE}/manifeste/creer`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Source-Country': 'CIV',
-        'X-Source-System': 'PAYS_A_FRONTEND'
-      },
-      body: JSON.stringify(manifeste),
-      signal: AbortSignal.timeout(60000)
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.message || errorMessage;
-      } catch (e) {
-        // Ignore, use default error message
-      }
-      throw new Error(errorMessage);
-    }
-    
-    const result = await response.json();
-    console.log('📋 Résultat création:', safeGet(result, 'status', 'UNKNOWN'), safeGet(result, 'message', 'No message'));
-    
-    // ✅ CORRECTION ULTRA-CRITIQUE : Accès ultra-sécurisé à toutes les propriétés
-    const resultStatus = safeGet(result, 'status', 'UNKNOWN');
-    
-    if (resultStatus === 'SUCCESS') {
-      afficherNotification('✅ Manifeste créé et transmis au Kit avec succès!', 'success');
-      
-      // ✅ Gestion ultra-sécurisée de la latence et autres propriétés
-      const latence = safeGet(result, 'transmissionKit.succes.latence', null) ||
-                    safeGet(result, 'transmission.latence', null) ||
-                    safeGet(result, 'transmissionKit.latence', null) ||
-                    safeGet(result, 'metadata.duration', null) ||
-                    'N/A';
-      
-      const manifesteId = safeGet(result, 'manifeste.id', null) ||
-                         safeGet(result, 'manifeste.numeroManifeste', null) ||
-                         manifeste.numeroManifeste ||
-                         'ID inconnu';
-      
-      ajouterInteraction('🚀 Transmission Kit', 
-        `✅ Succès - ${manifesteId} (${latence}ms)`);
-      
-      // Reset form
-      resetForm();
-      
-    } else if (resultStatus === 'PARTIAL_SUCCESS') {
-      afficherNotification('⚠️ Manifeste créé localement mais erreur transmission Kit', 'warning');
-      
-      // ✅ Gestion ultra-sécurisée des erreurs
-      const erreur = safeGet(result, 'transmissionKit.echec.erreur', null) ||
-                    safeGet(result, 'transmission.erreur', null) ||
-                    safeGet(result, 'erreur', null) ||
-                    'Erreur de transmission inconnue';
-      
-      ajouterInteraction('🚀 Transmission Kit', `⚠️ Partiel - ${erreur}`);
-    } else {
-      const errorMessage = safeGet(result, 'message', 'Erreur inconnue du serveur');
-      throw new Error(errorMessage);
-    }
-    
-    // ✅ Actualisation forcée avec gestion d'erreur
-    console.log('🔄 Actualisation forcée des statistiques...');
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await Promise.allSettled([
-        chargerStatistiques().catch(err => console.warn('Erreur stats:', err)),
-        chargerManifestes().catch(err => console.warn('Erreur manifestes:', err))
-      ]);
-      console.log('✅ Actualisation terminée');
-    } catch (refreshError) {
-      console.warn('Erreur actualisation:', refreshError);
-    }
-    
-  } catch (error) {
-    console.error('❌ Erreur création manifeste:', error);
-    const errorMessage = error.message || 'Erreur inconnue';
-    afficherNotification('❌ Erreur: ' + errorMessage, 'error');
-    ajouterInteraction('📋 Création manifeste', `❌ Erreur: ${errorMessage}`);
-  } finally {
-    // ✅ Restore button toujours, même en cas d'erreur
-    try {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+      // ✅ COLLECTE DES DONNÉES FORMAT UEMOA
+      console.log('📋 [Frontend] Collecte des données UEMOA du formulaire...');
+      
+      // ✅ Collecte des champs UEMOA principaux
+      const anneeManif = getFieldValue('annee_manif');
+      const bureauManif = getFieldValue('bureau_manif');
+      const numeroManif = getFieldValue('numero_manif');
+      const codeCgt = getFieldValue('code_cgt');
+      const consignataire = getFieldValue('consignataire');
+      const repertoire = getFieldValue('repertoire');
+      const navire = getFieldValue('navire');
+      const provenance = getFieldValue('provenance');
+      const pavillon = getFieldValue('pavillon');
+      const dateArrivee = getFieldValue('date_arrivee');
+      const valapprox = getFieldValue('valapprox', '0');
+      
+      console.log('🔍 [Frontend] Données UEMOA collectées:', {
+        anneeManif: `"${anneeManif}"`,
+        bureauManif: `"${bureauManif}"`,
+        numeroManif: `"${numeroManif}"`,
+        consignataire: `"${consignataire}"`,
+        navire: `"${navire}"`,
+        dateArrivee: `"${dateArrivee}"`
+      });
+      
+      // ✅ Collecte des articles UEMOA
+      const articles = [];
+      const articleSections = document.querySelectorAll('.article-section');
+      
+      articleSections.forEach((section, index) => {
+        const article = {
+          art: parseInt(section.querySelector('input[name="art"]')?.value) || (index + 1),
+          prec1: parseInt(section.querySelector('input[name="prec1"]')?.value) || 0,
+          prec2: parseInt(section.querySelector('input[name="prec2"]')?.value) || 0,
+          date_emb: section.querySelector('input[name="date_emb"]')?.value || dateArrivee,
+          lieu_emb: section.querySelector('input[name="lieu_emb"]')?.value || provenance,
+          pays_dest: section.querySelector('select[name="pays_dest"]')?.value || '',
+          ville_dest: section.querySelector('input[name="ville_dest"]')?.value || '',
+          connaissement: section.querySelector('input[name="connaissement"]')?.value || '',
+          expediteur: section.querySelector('input[name="expediteur"]')?.value || '',
+          destinataire: section.querySelector('input[name="destinataire"]')?.value || '',
+          voie_dest: section.querySelector('input[name="voie_dest"]')?.value || '',
+          ordre: section.querySelector('input[name="ordre"]')?.value || '',
+          marchandise: section.querySelector('input[name="marchandise"]')?.value || '',
+          poids: parseFloat(section.querySelector('input[name="poids"]')?.value) || 0,
+          nbre_colis: parseInt(section.querySelector('input[name="nbre_colis"]')?.value) || 1,
+          marque: section.querySelector('input[name="marque"]')?.value || 'NM',
+          mode_cond: section.querySelector('input[name="mode_cond"]')?.value || 'COLIS (PACKAGE)',
+          nbre_conteneur: parseInt(section.querySelector('input[name="nbre_conteneur"]')?.value) || 1,
+          conteneurs: []
+        };
+        
+        // Collecte des conteneurs pour cet article
+        const conteneurSections = section.querySelectorAll('.conteneur-section');
+        conteneurSections.forEach(conteneurSection => {
+          const conteneur = {
+            conteneur: conteneurSection.querySelector('input[name="conteneur"]')?.value || '',
+            type: conteneurSection.querySelector('select[name="type"]')?.value || 'DRS',
+            taille: conteneurSection.querySelector('select[name="taille"]')?.value || '40',
+            plomb: conteneurSection.querySelector('input[name="plomb"]')?.value || ''
+          };
+          article.conteneurs.push(conteneur);
+        });
+        
+        articles.push(article);
+      });
+      
+      // ✅ Construction du payload FORMAT UEMOA
+      const manifesteUEMOA = {
+        annee_manif: anneeManif,
+        bureau_manif: bureauManif,
+        numero_manif: parseInt(numeroManif) || Date.now(),
+        code_cgt: codeCgt,
+        consignataire: consignataire,
+        repertoire: repertoire,
+        navire: navire,
+        provenance: provenance,
+        pavillon: pavillon,
+        date_arrivee: dateArrivee,
+        valapprox: parseFloat(valapprox) || 0,
+        nbre_article: articles.length,
+        articles: articles
+      };
+      
+      console.log('📦 [Frontend] Payload UEMOA final construit:', JSON.stringify(manifesteUEMOA, null, 2));
+      
+      // ✅ Validation FORMAT UEMOA
+      const validationErrors = [];
+      
+      if (!manifesteUEMOA.numero_manif) {
+        validationErrors.push('Numéro de manifeste obligatoire');
       }
-    } catch (restoreError) {
-      console.warn('Erreur restauration bouton:', restoreError);
+      
+      if (!manifesteUEMOA.consignataire || manifesteUEMOA.consignataire.trim() === '') {
+        validationErrors.push('Consignataire obligatoire');
+      }
+      
+      if (!manifesteUEMOA.date_arrivee) {
+        validationErrors.push('Date d\'arrivée obligatoire');
+      }
+      
+      if (manifesteUEMOA.articles.length === 0) {
+        validationErrors.push('Au moins un article obligatoire');
+      } else {
+        manifesteUEMOA.articles.forEach((article, index) => {
+          if (!article.marchandise || article.marchandise.trim() === '') {
+            validationErrors.push(`Description de la marchandise obligatoire pour l'article ${index + 1}`);
+          }
+          if (!article.pays_dest || article.pays_dest.trim() === '') {
+            validationErrors.push(`Pays de destination obligatoire pour l'article ${index + 1}`);
+          }
+        });
+      }
+      
+      if (validationErrors.length > 0) {
+        console.error('❌ [Frontend] Validation UEMOA échouée:', validationErrors);
+        throw new Error('Validation échouée: ' + validationErrors.join(', '));
+        }
     }
-  }
 }
 
 // ✅ Fonction helper pour reset form sécurisé
