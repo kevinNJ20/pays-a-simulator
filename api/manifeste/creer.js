@@ -57,8 +57,8 @@ module.exports = async (req, res) => {
         transmissionKitReussie = true;
         console.log(`\n🎉 [PAYS A] ═══ TRANSMISSION KIT MULESOFT RÉUSSIE ═══`);
         console.log(`✅ [PAYS A] Durée: ${duration}ms`);
-        console.log(`✅ [PAYS A] Status Kit: ${reponseKit.status}`);
-        console.log(`✅ [PAYS A] Corrélation: ${reponseKit.correlationId}`);
+        console.log(`✅ [PAYS A] Status Kit: ${reponseKit?.status || 'N/A'}`);
+        console.log(`✅ [PAYS A] Corrélation: ${reponseKit?.correlationId || 'N/A'}`);
         console.log(`📋 [PAYS A] Réponse Kit:`, JSON.stringify(reponseKit, null, 2));
         console.log(`🎯 [PAYS A] ➤ Kit MuleSoft devrait maintenant insérer dans Supabase`);
         
@@ -68,17 +68,21 @@ module.exports = async (req, res) => {
         console.error(`❌ [PAYS A] Erreur: ${kitError.message}`);
         console.error(`❌ [PAYS A] Status Code: ${kitError.statusCode || 'N/A'}`);
         console.error(`❌ [PAYS A] Retry recommandé: ${kitError.retryRecommended ? 'OUI' : 'NON'}`);
-        console.error(`❌ [PAYS A] URL Kit: ${kitError.kitUrl}`);
+        console.error(`❌ [PAYS A] URL Kit: ${kitError.kitUrl || 'N/A'}`);
         console.error(`🚨 [PAYS A] ➤ Supabase NE SERA PAS mis à jour car Kit MuleSoft inaccessible`);
         
+        // ✅ CORRECTION CRITIQUE: Créer un objet reponseKit sécurisé
         reponseKit = {
           status: 'ERROR',
           message: kitError.message,
           erreur: kitError.message,
           timestamp: new Date(),
-          statusCode: kitError.statusCode,
-          retryRecommended: kitError.retryRecommended,
-          originalError: kitError.originalError?.message
+          statusCode: kitError.statusCode || null,
+          retryRecommended: kitError.retryRecommended || false,
+          originalError: kitError.originalError?.message || null,
+          latence: 0, // ✅ AJOUT: Propriété latence par défaut
+          correlationId: null, // ✅ AJOUT: Propriété correlationId par défaut
+          success: false // ✅ AJOUT: Propriété success par défaut
         };
       }
 
@@ -100,7 +104,7 @@ module.exports = async (req, res) => {
         tauxReussite: statsFinales.tauxReussiteTransmission
       });
 
-      // ✅ ÉTAPE 6: Réponse avec diagnostic complet
+      // ✅ ÉTAPE 6: Réponse avec diagnostic complet - ACCÈS SÉCURISÉS
       const statusCode = transmissionKitReussie ? 200 : 206; // 206 = Partial Success
       const responseStatus = transmissionKitReussie ? 'SUCCESS' : 'PARTIAL_SUCCESS';
       
@@ -120,27 +124,28 @@ module.exports = async (req, res) => {
           dateCreation: manifeste.dateCreation
         },
         
-        // ✅ Diagnostic transmission détaillé
+        // ✅ CORRECTION CRITIQUE: Diagnostic transmission avec accès ultra-sécurisés
         transmissionKit: {
           urlKit: kitClient.baseURL + '/manifeste/transmission',
           reussie: transmissionKitReussie,
           timestamp: new Date().toISOString(),
-          ...(transmissionKitReussie && {
+          ...(transmissionKitReussie && reponseKit && {
             succes: {
-              status: reponseKit.status,
-              message: reponseKit.message,
-              correlationId: reponseKit.correlationId,
-              latence: reponseKit.latence,
+              status: reponseKit.status || 'UNKNOWN',
+              message: reponseKit.message || 'Message non disponible',
+              correlationId: reponseKit.correlationId || null,
+              latence: reponseKit.latence || reponseKit.metadata?.duration || 0, // ✅ ACCÈS SÉCURISÉ
               supabaseUpdate: 'Kit MuleSoft devrait insérer dans Supabase'
             }
           }),
           ...(reponseKit && !transmissionKitReussie && {
             echec: {
-              erreur: reponseKit.erreur,
-              statusCode: reponseKit.statusCode,
-              retryRecommended: reponseKit.retryRecommended,
+              erreur: reponseKit.erreur || reponseKit.message || 'Erreur inconnue',
+              statusCode: reponseKit.statusCode || null,
+              retryRecommended: reponseKit.retryRecommended || false,
               cause: 'Kit MuleSoft inaccessible ou erreur de traitement',
-              impact: 'Supabase ne sera PAS mis à jour'
+              impact: 'Supabase ne sera PAS mis à jour',
+              latence: reponseKit.latence || 0 // ✅ ACCÈS SÉCURISÉ
             }
           })
         },
