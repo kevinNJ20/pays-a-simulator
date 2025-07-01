@@ -13,6 +13,20 @@ let statusInterval;
 let refreshInterval;
 let kitConnected = false;
 
+function getFieldValue(id, defaultValue = '') {
+    try {
+        const element = document.getElementById(id);
+        if (element && element.value !== undefined) {
+            const value = element.value.toString().trim();
+            return value || defaultValue;
+        }
+        return defaultValue;
+    } catch (error) {
+        console.warn(`Erreur getFieldValue ${id}:`, error);
+        return defaultValue;
+    }
+}
+
 // ✅ Fonction helper pour accès sécurisé aux propriétés
 function safeGet(obj, path, defaultValue = null) {
   try {
