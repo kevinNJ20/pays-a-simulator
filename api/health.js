@@ -1,3 +1,8 @@
+// ============================================================================
+// SÉNÉGAL - API Health CORRIGÉE selon rapport PDF UEMOA
+// Port de Dakar - Pays de prime abord  
+// ============================================================================
+
 const kitClient = require('../lib/kit-client');
 
 module.exports = async (req, res) => {
@@ -13,22 +18,24 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     try {
-      // ✅ CORRECTION: Tester la connectivité DIRECTE vers MuleSoft
+      console.log('🏥 [SÉNÉGAL] Demande health check - Port de Dakar');
+      
+      // Test connectivité Kit MuleSoft
       let kitStatus = null;
       try {
-        console.log('🔍 [Pays A] Test connectivité DIRECTE vers Kit MuleSoft...');
+        console.log('🔍 [SÉNÉGAL] Test connectivité Kit MuleSoft...');
         
         kitStatus = await Promise.race([
-          kitClient.verifierSante(), // ✅ Maintenant va directement vers MuleSoft
+          kitClient.verifierSante(),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Timeout Kit MuleSoft > 8s')), 8000)
           )
         ]);
         
-        console.log('✅ [Pays A] Kit MuleSoft accessible:', kitStatus.accessible);
+        console.log('✅ [SÉNÉGAL] Kit MuleSoft accessible:', kitStatus.accessible);
         
       } catch (error) {
-        console.error('❌ [Pays A] Kit MuleSoft inaccessible:', error.message);
+        console.error('❌ [SÉNÉGAL] Kit MuleSoft inaccessible:', error.message);
         kitStatus = {
           accessible: false,
           erreur: error.message,
@@ -39,41 +46,83 @@ module.exports = async (req, res) => {
       }
 
       const healthStatus = {
-        service: 'Système Douanier Pays A (Côtier)',
+        service: 'Système Douanier Sénégal (Port de Dakar)',
         status: 'UP',
         version: '1.0.0',
         timestamp: new Date().toISOString(),
         
+        // ✅ CORRECTION: Informations Sénégal conformes au rapport PDF
         pays: {
-          code: 'CIV',
-          nom: 'Côte d\'Ivoire',
+          code: 'SEN',
+          nom: 'Sénégal',
+          ville: 'Dakar',
           type: 'COTIER',
           role: 'PAYS_PRIME_ABORD'
         },
         
-        fonctionnalites: {
-          creationManifeste: 'ACTIF',
-          transmissionKit: kitStatus?.accessible ? 'ACTIF' : 'INDISPONIBLE',
-          receptionMainlevee: 'ACTIF'
+        port: {
+          nom: 'Port de Dakar',
+          type: 'PORT_COMMERCIAL',
+          capacite: 'INTERNATIONAL',
+          fonction: 'DEBARQUEMENT_MARCHANDISES'
         },
         
-        // ✅ CORRECTION: Informations Kit MuleSoft directes
+        fonctionnalites: {
+          creationManifeste: 'ACTIF', // Étapes 1-3
+          transmissionKit: kitStatus?.accessible ? 'ACTIF' : 'INDISPONIBLE', // Étapes 4-5
+          receptionDeclaration: 'ACTIF', // Étape 17
+          apurementMainlevee: 'ACTIF' // Étapes 18-19
+        },
+        
+        workflow: {
+          libre_pratique: {
+            etapes_senegal: '1-5, 17-19',
+            description: 'Création manifeste, transmission Kit, réception déclaration, apurement/levée',
+            prochaine_attente: 'Traitement pays de destination (étapes 6-16)'
+          },
+          transit: {
+            etapes_senegal: '1-6, 14-19',
+            description: 'Transit ordinaire dans le cadre libre pratique'
+          }
+        },
+        
+        // Kit d'Interconnexion
         kit: {
-          url: kitClient.baseURL, // URL MuleSoft directe
+          url: kitClient.baseURL,
           status: kitStatus?.status || 'UNKNOWN',
           accessible: kitStatus?.accessible || false,
           latence: kitStatus?.latence || null,
           dernierTest: kitStatus?.timestamp || new Date().toISOString(),
           modeConnexion: 'DIRECT_MULESOFT',
-          source: kitStatus?.source || 'UNKNOWN'
+          source: kitStatus?.source || 'UNKNOWN',
+          role: 'Transmission extraction vers pays de destination'
         },
         
         endpoints: {
           health: '/api/health',
           statistiques: '/api/statistiques',
-          creerManifeste: '/api/manifeste/creer',
+          creerManifeste: '/api/manifeste/creer', // Étapes 1-5
           listerManifestes: '/api/manifeste/lister',
-          autorisationMainlevee: '/api/mainlevee/autorisation'
+          autorisationMainlevee: '/api/mainlevee/autorisation', // Étape 17
+          apurementTraiter: '/api/apurement/traiter' // Étapes 18-19
+        },
+        
+        // Partenaires workflow
+        partenaires: {
+          kit_interconnexion: {
+            url: kitClient.baseURL,
+            role: 'Routage vers pays de destination',
+            disponible: kitStatus?.accessible || false
+          },
+          pays_destination: {
+            exemple: 'Mali (Bamako)',
+            role: 'Traitement déclaration libre pratique (étapes 6-16)',
+            communication: 'Via Kit MuleSoft'
+          },
+          commission_uemoa: {
+            role: 'Supervision et statistiques workflow',
+            communication: 'Transmission batch périodique (étape 21)'
+          }
         },
         
         monitoring: {
@@ -83,7 +132,7 @@ module.exports = async (req, res) => {
         }
       };
 
-      // ✅ Status global du service (DEGRADED si Kit inaccessible)
+      // Status global du service
       const globalStatus = kitStatus?.accessible ? 'UP' : 'DEGRADED';
       
       res.status(200).json({
@@ -91,20 +140,28 @@ module.exports = async (req, res) => {
         status: globalStatus
       });
       
+      console.log(`✅ [SÉNÉGAL] Health check envoyé - Service: ${globalStatus} - Kit: ${kitStatus?.accessible ? 'OK' : 'KO'}`);
+      
     } catch (error) {
-      console.error('❌ [Pays A] Erreur health check:', error);
+      console.error('❌ [SÉNÉGAL] Erreur health check:', error);
       
       res.status(500).json({
-        service: 'Système Douanier Pays A (Côtier)',
+        service: 'Système Douanier Sénégal (Port de Dakar)',
         status: 'ERROR',
         erreur: error.message,
+        pays: {
+          code: 'SEN',
+          nom: 'Sénégal',
+          ville: 'Dakar'
+        },
         timestamp: new Date().toISOString()
       });
     }
   } else {
     res.status(405).json({ 
       erreur: 'Méthode non autorisée',
-      methodesAutorisees: ['GET', 'OPTIONS']
+      methodesAutorisees: ['GET', 'OPTIONS'],
+      pays: 'Sénégal - Port de Dakar'
     });
   }
 };
