@@ -1,7 +1,7 @@
 {
-  "name": "simulateur-pays-a-cotier",
+  "name": "simulateur-senegal-dakar",
   "version": "1.0.0",
-  "description": "Simulateur Système Douanier Pays Côtier - Interconnexion UEMOA",
+  "description": "Simulateur Système Douanier Sénégal Port de Dakar - Interconnexion UEMOA",
   "main": "api/health.js",
   "scripts": {
     "dev": "vercel dev",
@@ -15,6 +15,6 @@
   "engines": {
     "node": "18.x"
   },
-  "keywords": ["douanes", "uemoa", "mulesoft", "interconnexion"],
-  "author": "Pays A - Côte d'Ivoire"
+  "keywords": ["douanes", "uemoa", "mulesoft", "interconnexion", "senegal", "dakar"],
+  "author": "Sénégal - Port de Dakar"
 }

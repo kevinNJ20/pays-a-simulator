@@ -14,29 +14,30 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     try {
-      console.log('📊 [Pays A] Demande statistiques');
+      console.log('📊 [SÉNÉGAL] Demande statistiques - Port de Dakar');
 
-      // ✅ CORRECTION 1: Obtenir les statistiques locales TOUJOURS (priorité)
+      // ✅ Obtenir les statistiques locales Sénégal (priorité)
       const stats = database.obtenirStatistiques();
-      console.log('✅ [Pays A] Statistiques locales récupérées:', {
+      console.log('✅ [SÉNÉGAL] Statistiques locales récupérées:', {
         manifestes: stats.manifestesCreees,
         transmissions: stats.transmissionsKit,
+        apurements: stats.apurementsTraites,
         succès: stats.transmissionsReussies
       });
       
-      // ✅ CORRECTION 2: Test Kit en mode non-bloquant et plus rapide
+      // ✅ Test Kit MuleSoft en mode non-bloquant
       let kitInfo = null;
       try {
-        console.log('🔍 [Pays A] Test Kit MuleSoft rapide...');
+        console.log('🔍 [SÉNÉGAL] Test Kit MuleSoft rapide...');
         kitInfo = await Promise.race([
           kitClient.verifierSante(),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout Kit MuleSoft > 3s')), 3000) // ✅ Réduit à 3s
+            setTimeout(() => reject(new Error('Timeout Kit MuleSoft > 5s')), 5000)
           )
         ]);
-        console.log('✅ [Pays A] Kit MuleSoft accessible:', kitInfo.status);
+        console.log('✅ [SÉNÉGAL] Kit MuleSoft accessible:', kitInfo.status);
       } catch (error) {
-        console.log('⚠️ [Pays A] Kit MuleSoft inaccessible (non bloquant):', error.message);
+        console.log('⚠️ [SÉNÉGAL] Kit MuleSoft inaccessible (non bloquant):', error.message);
         kitInfo = { 
           accessible: false, 
           erreur: error.message,
@@ -45,26 +46,52 @@ module.exports = async (req, res) => {
         };
       }
 
-      // Calculer des métriques avancées
-      const metriques = calculerMetriques(stats, database.obtenirInteractionsKit(10));
+      // Calculer des métriques avancées spécifiques Sénégal
+      const metriques = calculerMetriquesSenegal(stats, database.obtenirInteractionsKit(10));
 
-      // ✅ CORRECTION 3: TOUJOURS retourner SUCCESS pour les statistiques locales
+      // ✅ TOUJOURS retourner SUCCESS pour les statistiques locales Sénégal
       const reponse = {
-        status: 'SUCCESS', // ✅ TOUJOURS SUCCESS - Kit status séparé
-        message: 'Statistiques Pays A (Côtier)',
+        status: 'SUCCESS',
+        message: 'Statistiques Sénégal (Port de Dakar) - Pays de prime abord',
         timestamp: new Date().toISOString(),
         
-        // Statistiques principales (TOUJOURS disponibles)
+        // ✅ Informations Sénégal selon rapport PDF
+        paysTraitement: {
+          code: 'SEN',
+          nom: 'Sénégal',
+          ville: 'Dakar',
+          type: 'COTIER',
+          role: 'PAYS_PRIME_ABORD',
+          port: 'Port de Dakar'
+        },
+        
+        // Statistiques principales workflow Sénégal
         statistiques: {
           ...stats,
           performance: {
             tauxReussiteGlobal: metriques.tauxReussiteGlobal,
             latenceMoyenne: metriques.latenceMoyenne,
-            volumeTraiteToday: stats.manifestesAujourdhui
+            volumeTraiteToday: stats.manifestesAujourdhui,
+            tauxCompletionWorkflow: stats.workflow?.etape_19_mainlevee ? 
+              Math.round((stats.workflow.etape_19_mainlevee / stats.manifestesCreees) * 100) : 0
           }
         },
         
-        // ✅ CORRECTION 4: Statut Kit séparé des statistiques principales
+        // ✅ Workflow libre pratique Sénégal (étapes 1-5, 17-19)
+        workflowLibrePratique: {
+          etapesSenegal: '1-5, 17-19',
+          description: 'Création manifeste, transmission Kit, réception déclaration, apurement/levée',
+          etapesCompletes: {
+            'etapes_1_3_creation': stats.workflow?.etapes_1_3_creation || 0,
+            'etape_4_5_transmission': stats.workflow?.etape_4_transmission || 0,
+            'etape_17_declaration': stats.workflow?.etape_17_declaration || 0,
+            'etape_18_apurement': stats.workflow?.etape_18_apurement || 0,
+            'etape_19_mainlevee': stats.workflow?.etape_19_mainlevee || 0
+          },
+          prochaine_attente: 'Traitement pays de destination (étapes 6-16)'
+        },
+        
+        // ✅ Statut Kit séparé des statistiques principales
         kit: {
           status: kitInfo?.status || 'UNKNOWN',
           accessible: kitInfo?.accessible || false,
@@ -73,66 +100,95 @@ module.exports = async (req, res) => {
           dernierTest: kitInfo?.timestamp || new Date().toISOString(),
           modeConnexion: 'DIRECT_MULESOFT',
           source: kitInfo?.source || 'DIRECT_MULESOFT_TEST',
-          // ✅ NOUVEAU: Statut séparé pour UI
-          connectivity: kitInfo?.accessible ? 'CONNECTED' : 'DISCONNECTED'
+          connectivity: kitInfo?.accessible ? 'CONNECTED' : 'DISCONNECTED',
+          role: 'Transmission extraction vers pays de destination'
         },
         
-        // Interactions récentes avec le Kit
+        // Interactions récentes spécifiques Sénégal
         interactionsRecentes: database.obtenirInteractionsKit(5).map(interaction => ({
           id: interaction.id,
           type: interaction.type,
           timestamp: interaction.timestamp,
-          statut: interaction.donnees?.statut,
-          details: interaction.donnees?.manifesteId || interaction.donnees?.autorisationId
+          etapeWorkflow: interaction.etapeWorkflow,
+          paysCode: interaction.paysCode,
+          description: interaction.description
         })),
         
-        // Breakdown par type d'opération
+        // ✅ Opérations par type selon workflow Sénégal
         operationsParType: {
           manifestesCreees: stats.manifestesCreees,
           transmissionsKit: stats.transmissionsKit,
-          autorisationsRecues: stats.autorisationsRecues,
+          declarationsRecues: stats.autorisationsRecues,
+          apurementsTraites: stats.apurementsTraites,
+          transitsCrees: stats.transitsCrees,
           erreursTransmission: stats.erreurs
         },
         
-        // Données pour graphiques
+        // Tendances workflow
         tendances: metriques.tendances,
         
-        // ✅ CORRECTION 5: Santé système avec distinction claire
+        // ✅ Santé système Sénégal
         systemeSante: {
-          servicePrincipal: 'UP', // ✅ Service local toujours UP
-          baseDonnees: 'UP',      // ✅ Base mémoire toujours UP
-          kitInterconnexion: kitInfo?.accessible ? 'UP' : 'DOWN', // ✅ Kit séparé
+          servicePrincipal: 'UP',
+          baseDonnees: 'UP',
+          kitInterconnexion: kitInfo?.accessible ? 'UP' : 'DOWN',
           modeIntegration: 'DIRECT_MULESOFT',
           urlKit: kitClient.baseURL,
           derniereMiseAJour: stats.derniereMiseAJour,
-          // ✅ NOUVEAU: Impact sur fonctionnalités
-          fonctionnalitesAffectees: kitInfo?.accessible ? [] : ['Transmission temps réel', 'Synchronisation inter-pays']
+          fonctionnalitesAffectees: kitInfo?.accessible ? [] : ['Transmission temps réel vers pays destination']
+        },
+        
+        // ✅ Partenaires workflow selon rapport PDF
+        partenaires: {
+          kit_interconnexion: {
+            url: kitClient.baseURL,
+            role: 'Routage vers pays de destination',
+            disponible: kitInfo?.accessible || false
+          },
+          pays_destination: {
+            exemple: 'Mali (Bamako)',
+            role: 'Traitement déclaration libre pratique (étapes 6-16)',
+            communication: 'Via Kit MuleSoft'
+          },
+          commission_uemoa: {
+            role: 'Supervision et statistiques workflow',
+            communication: 'Transmission batch périodique (étape 21)'
+          }
         }
       };
 
       // ✅ TOUJOURS 200 OK pour les statistiques locales
       res.status(200).json(reponse);
       
-      console.log('📊 [Pays A] Statistiques envoyées - Kit status:', kitInfo?.accessible ? 'OK' : 'KO');
+      console.log('📊 [SÉNÉGAL] Statistiques envoyées - Kit status:', kitInfo?.accessible ? 'OK' : 'KO');
       
     } catch (error) {
-      console.error('❌ [Pays A] Erreur récupération statistiques:', error);
+      console.error('❌ [SÉNÉGAL] Erreur récupération statistiques:', error);
       
-      // ✅ CORRECTION 6: Même en cas d'erreur, essayer de retourner les stats de base
+      // ✅ Même en cas d'erreur, essayer de retourner les stats de base
       try {
         const statsBasiques = database.obtenirStatistiques();
         res.status(200).json({
-          status: 'PARTIAL', // ✅ Statut partiel mais utilisable
-          message: 'Statistiques partielles disponibles',
+          status: 'PARTIAL',
+          message: 'Statistiques partielles Sénégal disponibles',
+          paysTraitement: {
+            code: 'SEN',
+            nom: 'Sénégal',
+            port: 'Port de Dakar'
+          },
           statistiques: statsBasiques,
           erreur: error.message,
           timestamp: new Date().toISOString()
         });
       } catch (fatalError) {
-        // ✅ Erreur fatale uniquement si impossible d'accéder aux stats locales
         res.status(500).json({
           status: 'ERROR',
-          message: 'Erreur fatale lors de la récupération des statistiques',
+          message: 'Erreur fatale statistiques Sénégal',
+          paysTraitement: {
+            code: 'SEN',
+            nom: 'Sénégal',
+            port: 'Port de Dakar'
+          },
           erreur: fatalError.message,
           timestamp: new Date().toISOString()
         });
@@ -141,43 +197,8 @@ module.exports = async (req, res) => {
   } else {
     res.status(405).json({ 
       erreur: 'Méthode non autorisée',
-      methodesAutorisees: ['GET', 'OPTIONS']
+      methodesAutorisees: ['GET', 'OPTIONS'],
+      paysTraitement: 'Sénégal - Port de Dakar'
     });
   }
 };
-
-// ✅ Fonction pour calculer des métriques avancées (inchangée mais optimisée)
-function calculerMetriques(stats, interactions) {
-  // Taux de réussite global
-  const tauxReussiteGlobal = stats.transmissionsKit > 0 
-    ? Math.round(((stats.transmissionsKit - stats.erreurs) / stats.transmissionsKit) * 100)
-    : 100;
-
-  // Latence moyenne des interactions réussies
-  const interactionsAvecLatence = interactions
-    .filter(i => i.donnees?.details?.latence && i.donnees?.details?.latence > 0)
-    .map(i => i.donnees.details.latence);
-  
-  const latenceMoyenne = interactionsAvecLatence.length > 0
-    ? Math.round(interactionsAvecLatence.reduce((a, b) => a + b, 0) / interactionsAvecLatence.length)
-    : 0;
-
-  // Tendances (basé sur les interactions des dernières heures)
-  const maintenant = new Date();
-  const deuxHeuresAgo = new Date(maintenant.getTime() - (2 * 60 * 60 * 1000));
-  
-  const interactionsRecentes = interactions
-    .filter(i => new Date(i.timestamp) >= deuxHeuresAgo);
-  
-  const tendances = {
-    interactionsDernieres2h: interactionsRecentes.length,
-    erreursDernieres2h: interactionsRecentes.filter(i => i.donnees?.statut === 'ERREUR').length,
-    evolutionVolume: interactionsRecentes.length > 0 ? 'STABLE' : 'FAIBLE'
-  };
-
-  return {
-    tauxReussiteGlobal,
-    latenceMoyenne,
-    tendances
-  };
-}
