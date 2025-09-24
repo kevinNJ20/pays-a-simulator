@@ -6,17 +6,23 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
-    "build": "echo 'No build required'",
-    "vercel-dev": "vercel dev",
     "local": "node server.js"
   },
   "dependencies": {
+    "@vercel/node": "^5.3.24",
     "axios": "^1.6.0",
     "cors": "^2.8.5"
   },
   "engines": {
     "node": "22.x"
   },
-  "keywords": ["douanes", "uemoa", "mulesoft", "interconnexion", "senegal", "dakar"],
+  "keywords": [
+    "douanes",
+    "uemoa",
+    "mulesoft",
+    "interconnexion",
+    "senegal",
+    "dakar"
+  ],
   "author": "Sénégal - Port de Dakar"
 }
