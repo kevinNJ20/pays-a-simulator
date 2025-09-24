@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏗️ Pays A (Côtier) - Kit Interconnexion UEMOA</title>
+    <title>🇸🇳 Sénégal - Port de Dakar - Système Douanier UEMOA</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00a651 0%, #ff0000 50%, #ffcc00 100%);
             min-height: 100vh;
             color: #333;
         }
@@ -113,14 +114,30 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
         }
 
         @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
+
+            0%,
+            50% {
+                opacity: 1;
+            }
+
+            51%,
+            100% {
+                opacity: 0.3;
+            }
         }
 
         .main {
@@ -151,7 +168,7 @@
             padding: 20px;
             background: #f8f9fa;
             border-radius: 10px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #00a651;
         }
 
         .form-section h3 {
@@ -189,8 +206,8 @@
         .form-row select:focus,
         .form-row textarea:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #00a651;
+            box-shadow: 0 0 0 3px rgba(0, 166, 81, 0.1);
         }
 
         .article-section {
@@ -233,7 +250,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00a651 0%, #ff0000 100%);
             color: white;
             width: 100%;
             padding: 15px;
@@ -242,7 +259,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 166, 81, 0.3);
         }
 
         .btn-test {
@@ -273,7 +290,7 @@
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #00a651;
         }
 
         .interaction-item {
@@ -320,7 +337,7 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #00a651;
         }
 
         .manifeste-item.transmitted {
@@ -404,17 +421,19 @@
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            border: 3px solid rgba(255, 255, 255, .3);
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        /* Styles pour la section apurement */
+        /* Styles spécifiques pour l'apurement */
         #apurement-section {
             background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
             border: 2px solid #2196f3;
@@ -433,10 +452,6 @@
             border-left-color: #9c27b0;
         }
 
-        #apurement-success h3 {
-            margin-bottom: 0;
-        }
-
         .btn-secondary {
             background: #6c757d;
             color: white;
@@ -452,56 +467,57 @@
             .main {
                 grid-template-columns: 1fr;
             }
-            
+
             .form-row {
                 grid-template-columns: 1fr;
             }
-            
+
             .header h1 {
                 font-size: 2em;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header class="header">
-            <h1>🏗️ Système Douanier Pays A (Côtier)</h1>
-            <p>🇨🇮 Côte d'Ivoire - Interconnexion UEMOA via Kit MuleSoft</p>
+            <h1>🇸🇳 Système Douanier Sénégal</h1>
+            <p>Port de Dakar - Pays de Prime Abord - Interconnexion UEMOA via Kit MuleSoft</p>
         </header>
 
         <!-- Bannière statut Kit -->
         <div class="kit-status-banner checking" id="kit-banner">
-            <div class="loading"></div> Vérification connexion Kit d'Interconnexion...
+            <div class="loading"></div> Vérification connexion Kit d'Interconnexion MuleSoft...
         </div>
 
         <!-- Grille de statut -->
         <div class="status-grid">
             <div class="status-card">
-                <h3>🏛️ Service Local</h3>
+                <h3>🏛️ Douanes Sénégal</h3>
                 <div class="connection-status">
                     <div class="status-indicator connected"></div>
-                    <span>Douanes CIV Actives</span>
+                    <span>Port de Dakar Actif</span>
                 </div>
-                <small>Côte d'Ivoire - Port d'Abidjan</small>
+                <small>Sénégal - Pays de prime abord</small>
             </div>
-            
+
             <div class="status-card">
-                <h3>🔗 Kit d'Interconnexion</h3>
+                <h3>🔗 Kit MuleSoft</h3>
                 <div class="connection-status">
                     <div class="status-indicator checking" id="kit-indicator"></div>
                     <span id="kit-status-text">Vérification...</span>
                 </div>
                 <small id="kit-details">Test de connectivité en cours</small>
             </div>
-            
+
             <div class="status-card">
                 <h3>📊 Statistiques</h3>
                 <div>Manifestes créés: <strong id="stat-manifestes">0</strong></div>
                 <div>Transmissions Kit: <strong id="stat-transmissions">0</strong></div>
                 <div>Succès: <strong id="stat-succes">0</strong></div>
             </div>
-            
+
             <div class="status-card">
                 <h3>📈 Performance</h3>
                 <div>Taux de réussite: <strong id="taux-reussite">100%</strong></div>
@@ -510,9 +526,9 @@
         </div>
 
         <main class="main">
-            <!-- Formulaire création manifeste - NOUVEAU FORMAT -->
+            <!-- Formulaire création manifeste UEMOA - Format Sénégal -->
             <section class="card">
-                <h2>📋 Créer un Manifeste (Format UEMOA)</h2>
+                <h2>📋 Créer un Manifeste (Format UEMOA - Port de Dakar)</h2>
                 <form id="manifeste-form">
                     <!-- Informations Manifeste -->
                     <div class="form-section">
@@ -543,7 +559,8 @@
                             <input type="date" id="date_arrivee" required>
                         </div>
                         <div class="form-row single">
-                            <input type="number" id="valapprox" placeholder="Valeur approximative" value="0" step="0.01">
+                            <input type="number" id="valapprox" placeholder="Valeur approximative" value="0"
+                                step="0.01">
                         </div>
                     </div>
 
@@ -566,11 +583,13 @@
                                 <div class="form-row">
                                     <select name="pays_dest" required>
                                         <option value="">Pays destination</option>
-                                        <option value="SÉNÉGAL">🇸🇳 SÉNÉGAL</option>
-                                        <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
                                         <option value="MALI">🇲🇱 MALI</option>
+                                        <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
                                         <option value="NIGER">🇳🇪 NIGER</option>
-                                        <option value="TCHAD">🇹🇩 TCHAD</option>
+                                        <option value="CÔTE D'IVOIRE">🇨🇮 CÔTE D'IVOIRE</option>
+                                        <option value="GUINEA-BISSAU">🇬🇼 GUINEA-BISSAU</option>
+                                        <option value="TOGO">🇹🇬 TOGO</option>
+                                        <option value="BÉNIN">🇧🇯 BÉNIN</option>
                                     </select>
                                     <input type="text" name="ville_dest" placeholder="Ville destination" required>
                                 </div>
@@ -584,7 +603,8 @@
                                 </div>
                                 <div class="form-row">
                                     <input type="text" name="ordre" placeholder="À l'ordre de">
-                                    <input type="text" name="marchandise" placeholder="Description marchandise" required>
+                                    <input type="text" name="marchandise" placeholder="Description marchandise"
+                                        required>
                                 </div>
                                 <div class="form-row triple">
                                     <input type="number" name="poids" placeholder="Poids (kg)" step="0.01" required>
@@ -592,8 +612,10 @@
                                     <input type="text" name="marque" placeholder="Marque" value="NM">
                                 </div>
                                 <div class="form-row">
-                                    <input type="text" name="mode_cond" placeholder="Mode conditionnement" value="COLIS (PACKAGE)">
-                                    <input type="number" name="nbre_conteneur" placeholder="Nombre conteneurs" value="1" min="0">
+                                    <input type="text" name="mode_cond" placeholder="Mode conditionnement"
+                                        value="COLIS (PACKAGE)">
+                                    <input type="number" name="nbre_conteneur" placeholder="Nombre conteneurs" value="1"
+                                        min="0">
                                 </div>
 
                                 <!-- Conteneurs -->
@@ -621,21 +643,22 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-add" onclick="ajouterConteneur(0)">➕ Ajouter Conteneur</button>
+                                <button type="button" class="btn btn-add" onclick="ajouterConteneur(0)">➕ Ajouter
+                                    Conteneur</button>
                             </div>
                         </div>
                         <button type="button" class="btn btn-add" onclick="ajouterArticle()">➕ Ajouter Article</button>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary" id="btn-submit">
-                        🚀 Enregistrer le manifeste
+                        🚀 Enregistrer le manifeste (Étapes 1-5)
                     </button>
                 </form>
-                
+
                 <!-- Boutons de test -->
                 <div style="margin-top: 20px; text-align: center;">
                     <button class="btn btn-test" onclick="testerConnexionKit()">
-                        🔧 Tester Kit
+                        🔧 Tester Kit MuleSoft
                     </button>
                     <button class="btn btn-diagnostic" onclick="lancerDiagnostic()">
                         🩺 Diagnostic Complet
@@ -645,7 +668,7 @@
 
             <!-- Manifestes récents -->
             <section class="card">
-                <h2>📄 Manifestes Récents</h2>
+                <h2>📄 Manifestes Récents - Port de Dakar</h2>
                 <div class="manifeste-list" id="manifestes-list">
                     <p>Chargement des manifestes...</p>
                 </div>
@@ -654,11 +677,11 @@
                 </button>
             </section>
 
-            <!-- Section Apurement et Levée -->
+            <!-- Section Apurement et Levée (Étapes 18-19) -->
             <section class="card full-width" id="apurement-section" style="display: none;">
-                <h2>🔓 Apurement et Levée des Marchandises</h2>
+                <h2>🔓 Apurement et Levée des Marchandises (Étapes 18-19)</h2>
                 <div class="form-section">
-                    <h3>📋 Confirmation de Recouvrement et Apurement</h3>
+                    <h3>📋 Confirmation Apurement - Port de Dakar</h3>
                     <div id="apurement-info" style="display: none;">
                         <div class="manifeste-item transmitted">
                             <div class="manifeste-header">
@@ -666,13 +689,13 @@
                             </div>
                             <div class="manifeste-details">
                                 🚢 Navire: <span id="apu-navire">--</span><br>
-                                🏢 Transporteur: <span id="apu-transporteur">--</span><br>
+                                🏢 Consignataire: <span id="apu-transporteur">--</span><br>
                                 💰 Montant acquitté: <span id="apu-montant">--</span> FCFA<br>
                                 🏳️ Pays déclarant: <span id="apu-pays">--</span><br>
-                                📅 Date mainlevée: <span id="apu-date-mainlevee">--</span>
+                                📅 Date réception: <span id="apu-date-mainlevee">--</span>
                             </div>
                         </div>
-                        
+
                         <div class="form-row" style="margin-top: 20px;">
                             <div>
                                 <label for="type-confirmation">Type de Confirmation:</label>
@@ -683,17 +706,19 @@
                             </div>
                             <div>
                                 <label for="agent-confirmation">Agent de Confirmation:</label>
-                                <input type="text" id="agent-confirmation" class="form-control" placeholder="Nom de l'agent" required>
+                                <input type="text" id="agent-confirmation" class="form-control"
+                                    placeholder="Nom de l'agent" required>
                             </div>
                         </div>
-                        
+
                         <div class="form-row single" style="margin-top: 15px;">
                             <div>
                                 <label for="observations">Observations:</label>
-                                <textarea id="observations" class="form-control" rows="3" placeholder="Observations éventuelles..."></textarea>
+                                <textarea id="observations" class="form-control" rows="3"
+                                    placeholder="Observations éventuelles..."></textarea>
                             </div>
                         </div>
-                        
+
                         <div style="text-align: center; margin-top: 20px;">
                             <button class="btn btn-primary" onclick="confirmerApurement()" id="btn-confirmer-apurement">
                                 ✅ Confirmer l'Apurement et la Levée
@@ -703,27 +728,28 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div id="apurement-loading" style="display: none; text-align: center; padding: 40px;">
                         <div class="loading"></div>
                         <p style="margin-top: 20px;">Chargement des informations d'apurement...</p>
                     </div>
-                    
+
                     <div id="apurement-error" style="display: none; text-align: center; padding: 40px;">
                         <p style="color: #dc3545;">❌ <span id="apurement-error-message">Erreur de chargement</span></p>
                         <button class="btn btn-secondary" onclick="fermerApurement()" style="margin-top: 20px;">
                             Fermer
                         </button>
                     </div>
-                    
+
                     <div id="apurement-success" style="display: none; text-align: center; padding: 40px;">
-                        <h3 style="color: #28a745;">✅ Apurement Confirmé avec Succès!</h3>
+                        <h3 style="color: #28a745;">✅ Workflow Sénégal Terminé!</h3>
                         <p style="margin-top: 20px;">
-                            Le manifeste <strong id="success-manifeste">--</strong> a été apuré et les marchandises peuvent être levées.
+                            Le manifeste <strong id="success-manifeste">--</strong> a été apuré et les marchandises
+                            peuvent être levées au Port de Dakar.
                         </p>
                         <div class="manifeste-item transmitted" style="margin: 20px auto; max-width: 600px;">
                             <div class="manifeste-details">
-                                📋 Référence apurement: <span id="success-ref-apurement">--</span><br>
+                                📋 Bon à enlever: <span id="success-ref-apurement">--</span><br>
                                 🔓 Type confirmation: <span id="success-type-confirmation">--</span><br>
                                 👤 Agent: <span id="success-agent">--</span><br>
                                 📅 Date apurement: <span id="success-date">--</span>
@@ -738,14 +764,14 @@
 
             <!-- Interactions Kit en temps réel -->
             <section class="card full-width">
-                <h2>🔗 Interactions Kit d'Interconnexion en Temps Réel</h2>
+                <h2>🔗 Interactions Kit MuleSoft - Workflow Temps Réel</h2>
                 <div class="kit-interactions" id="kit-interactions">
                     <div class="interaction-item">
                         <div class="interaction-header">
-                            <div class="interaction-title">🚀 Système initialisé</div>
+                            <div class="interaction-title">🇸🇳 Système Sénégal initialisé</div>
                             <div class="interaction-time" id="init-time"></div>
                         </div>
-                        <div>Monitoring des échanges avec Kit MuleSoft activé - Format UEMOA</div>
+                        <div>Port de Dakar - Monitoring des échanges avec Kit MuleSoft activé - Format UEMOA</div>
                     </div>
                 </div>
             </section>
@@ -756,39 +782,16 @@
 
     <script>
         // ============================================================================
-        // PAYS A - JavaScript CORRIGÉ - NOUVEAU FORMAT MANIFESTE UEMOA
+        // SÉNÉGAL - JavaScript adapté au Port de Dakar
         // ============================================================================
-        
+
         const API_BASE = window.location.origin + '/api';
         let statusInterval;
         let refreshInterval;
         let kitConnected = false;
         let articleCount = 1;
 
-        // ✅ FONCTION ULTRA-SÉCURISÉE POUR ACCÉDER AUX PROPRIÉTÉS D'OBJETS
-        function getValue(obj, path, fallback = null) {
-            if (!obj || !path) return fallback;
-            
-            try {
-                const keys = path.split('.');
-                let current = obj;
-                
-                for (let i = 0; i < keys.length; i++) {
-                    if (current && typeof current === 'object' && keys[i] in current) {
-                        current = current[keys[i]];
-                    } else {
-                        return fallback;
-                    }
-                }
-                
-                return current !== null && current !== undefined ? current : fallback;
-            } catch (error) {
-                console.warn('Erreur getValue:', path, error);
-                return fallback;
-            }
-        }
-
-        // ✅ FONCTION MANQUANTE À AJOUTER dans votre JavaScript existant
+        // ✅ FONCTION HELPER pour valeurs de champs
         function getFieldValue(id, defaultValue = '') {
             try {
                 const element = document.getElementById(id);
@@ -803,7 +806,30 @@
             }
         }
 
-        // ✅ FONCTION ULTRA-SÉCURISÉE POUR METTRE À JOUR LES ÉLÉMENTS DOM
+        // ✅ FONCTION HELPER pour accès sécurisé aux propriétés
+        function getValue(obj, path, fallback = null) {
+            if (!obj || !path) return fallback;
+
+            try {
+                const keys = path.split('.');
+                let current = obj;
+
+                for (let i = 0; i < keys.length; i++) {
+                    if (current && typeof current === 'object' && keys[i] in current) {
+                        current = current[keys[i]];
+                    } else {
+                        return fallback;
+                    }
+                }
+
+                return current !== null && current !== undefined ? current : fallback;
+            } catch (error) {
+                console.warn('Erreur getValue:', path, error);
+                return fallback;
+            }
+        }
+
+        // ✅ FONCTION HELPER pour mettre à jour des éléments DOM
         function setElementText(id, value, fallback = '--') {
             try {
                 const element = document.getElementById(id);
@@ -819,109 +845,62 @@
             }
         }
 
-        // ✅ NOUVELLE FONCTION : Ajouter un article
+        // ✅ GESTION DYNAMIQUE DES ARTICLES
         function ajouterArticle() {
             articleCount++;
             const container = document.getElementById('articles-container');
             const articleDiv = document.createElement('div');
             articleDiv.className = 'article-section';
             articleDiv.setAttribute('data-article', articleCount - 1);
-            
+
             articleDiv.innerHTML = `
-                <h4>Article ${articleCount} <button type="button" onclick="supprimerArticle(${articleCount - 1})" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 4px 8px; margin-left: 10px;">❌</button></h4>
-                <div class="form-row triple">
-                    <input type="number" name="art" placeholder="N° Article" value="${articleCount}" required>
-                    <input type="number" name="prec1" placeholder="Précision 1" value="0">
-                    <input type="number" name="prec2" placeholder="Précision 2" value="0">
-                </div>
-                <div class="form-row">
-                    <input type="date" name="date_emb" placeholder="Date embarquement" required>
-                    <input type="text" name="lieu_emb" placeholder="Lieu embarquement" required>
-                </div>
-                <div class="form-row">
-                    <select name="pays_dest" required>
-                        <option value="">Pays destination</option>
-                        <option value="SÉNÉGAL">🇸🇳 SÉNÉGAL</option>
-                        <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
-                        <option value="MALI">🇲🇱 MALI</option>
-                        <option value="NIGER">🇳🇪 NIGER</option>
-                        <option value="TCHAD">🇹🇩 TCHAD</option>
-                    </select>
-                    <input type="text" name="ville_dest" placeholder="Ville destination" required>
-                </div>
-                <div class="form-row">
-                    <input type="text" name="connaissement" placeholder="Connaissement" required>
-                    <input type="text" name="expediteur" placeholder="Expéditeur" required>
-                </div>
-                <div class="form-row">
-                    <input type="text" name="destinataire" placeholder="Destinataire" required>
-                    <input type="text" name="voie_dest" placeholder="Voie destination">
-                </div>
-                <div class="form-row">
-                    <input type="text" name="ordre" placeholder="À l'ordre de">
-                    <input type="text" name="marchandise" placeholder="Description marchandise" required>
-                </div>
-                <div class="form-row triple">
-                    <input type="number" name="poids" placeholder="Poids (kg)" step="0.01" required>
-                    <input type="number" name="nbre_colis" placeholder="Nombre colis" required>
-                    <input type="text" name="marque" placeholder="Marque" value="NM">
-                </div>
-                <div class="form-row">
-                    <input type="text" name="mode_cond" placeholder="Mode conditionnement" value="COLIS (PACKAGE)">
-                    <input type="number" name="nbre_conteneur" placeholder="Nombre conteneurs" value="1" min="0">
-                </div>
-                <div class="conteneurs-container">
-                    <div class="conteneur-section" data-conteneur="0">
-                        <h5>Conteneur 1</h5>
-                        <div class="form-row">
-                            <input type="text" name="conteneur" placeholder="N° Conteneur" required>
-                            <select name="type" required>
-                                <option value="">Type conteneur</option>
-                                <option value="DRS">DRS - Dry Standard</option>
-                                <option value="REF">REF - Refrigerated</option>
-                                <option value="OPT">OPT - Open Top</option>
-                                <option value="FLT">FLT - Flat Rack</option>
-                            </select>
-                        </div>
-                        <div class="form-row">
-                            <select name="taille" required>
-                                <option value="">Taille conteneur</option>
-                                <option value="20">20 pieds</option>
-                                <option value="40">40 pieds</option>
-                                <option value="45">45 pieds</option>
-                            </select>
-                            <input type="text" name="plomb" placeholder="N° Plomb" required>
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-add" onclick="ajouterConteneur(${articleCount - 1})">➕ Ajouter Conteneur</button>
-            `;
-            
-            container.appendChild(articleDiv);
-        }
-
-        // ✅ NOUVELLE FONCTION : Supprimer un article
-        function supprimerArticle(articleIndex) {
-            const articleDiv = document.querySelector(`[data-article="${articleIndex}"]`);
-            if (articleDiv && document.querySelectorAll('.article-section').length > 1) {
-                articleDiv.remove();
-            } else {
-                afficherNotification('⚠️ Au moins un article est requis', 'warning');
-            }
-        }
-
-        // ✅ NOUVELLE FONCTION : Ajouter un conteneur
-        function ajouterConteneur(articleIndex) {
-            const articleDiv = document.querySelector(`[data-article="${articleIndex}"]`);
-            const conteneursContainer = articleDiv.querySelector('.conteneurs-container');
-            const conteneurCount = conteneursContainer.children.length + 1;
-            
-            const conteneurDiv = document.createElement('div');
-            conteneurDiv.className = 'conteneur-section';
-            conteneurDiv.setAttribute('data-conteneur', conteneurCount - 1);
-            
-            conteneurDiv.innerHTML = `
-                <h5>Conteneur ${conteneurCount} <button type="button" onclick="supprimerConteneur(${articleIndex}, ${conteneurCount - 1})" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 2px 6px; margin-left: 10px; font-size: 10px;">❌</button></h5>
+        <h4>Article ${articleCount} <button type="button" onclick="supprimerArticle(${articleCount - 1})" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 4px 8px; margin-left: 10px;">❌</button></h4>
+        <div class="form-row triple">
+            <input type="number" name="art" placeholder="N° Article" value="${articleCount}" required>
+            <input type="number" name="prec1" placeholder="Précision 1" value="0">
+            <input type="number" name="prec2" placeholder="Précision 2" value="0">
+        </div>
+        <div class="form-row">
+            <input type="date" name="date_emb" placeholder="Date embarquement" required>
+            <input type="text" name="lieu_emb" placeholder="Lieu embarquement" required>
+        </div>
+        <div class="form-row">
+            <select name="pays_dest" required>
+                <option value="">Pays destination</option>
+                <option value="MALI">🇲🇱 MALI</option>
+                <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
+                <option value="NIGER">🇳🇪 NIGER</option>
+                <option value="CÔTE D'IVOIRE">🇨🇮 CÔTE D'IVOIRE</option>
+                <option value="GUINEA-BISSAU">🇬🇼 GUINEA-BISSAU</option>
+                <option value="TOGO">🇹🇬 TOGO</option>
+                <option value="BÉNIN">🇧🇯 BÉNIN</option>
+            </select>
+            <input type="text" name="ville_dest" placeholder="Ville destination" required>
+        </div>
+        <div class="form-row">
+            <input type="text" name="connaissement" placeholder="Connaissement" required>
+            <input type="text" name="expediteur" placeholder="Expéditeur" required>
+        </div>
+        <div class="form-row">
+            <input type="text" name="destinataire" placeholder="Destinataire" required>
+            <input type="text" name="voie_dest" placeholder="Voie destination">
+        </div>
+        <div class="form-row">
+            <input type="text" name="ordre" placeholder="À l'ordre de">
+            <input type="text" name="marchandise" placeholder="Description marchandise" required>
+        </div>
+        <div class="form-row triple">
+            <input type="number" name="poids" placeholder="Poids (kg)" step="0.01" required>
+            <input type="number" name="nbre_colis" placeholder="Nombre colis" required>
+            <input type="text" name="marque" placeholder="Marque" value="NM">
+        </div>
+        <div class="form-row">
+            <input type="text" name="mode_cond" placeholder="Mode conditionnement" value="COLIS (PACKAGE)">
+            <input type="number" name="nbre_conteneur" placeholder="Nombre conteneurs" value="1" min="0">
+        </div>
+        <div class="conteneurs-container">
+            <div class="conteneur-section" data-conteneur="0">
+                <h5>Conteneur 1</h5>
                 <div class="form-row">
                     <input type="text" name="conteneur" placeholder="N° Conteneur" required>
                     <select name="type" required>
@@ -941,17 +920,63 @@
                     </select>
                     <input type="text" name="plomb" placeholder="N° Plomb" required>
                 </div>
-            `;
-            
+            </div>
+        </div>
+        <button type="button" class="btn btn-add" onclick="ajouterConteneur(${articleCount - 1})">➕ Ajouter Conteneur</button>
+    `;
+
+            container.appendChild(articleDiv);
+        }
+
+        function supprimerArticle(articleIndex) {
+            const articleDiv = document.querySelector(`[data-article="${articleIndex}"]`);
+            if (articleDiv && document.querySelectorAll('.article-section').length > 1) {
+                articleDiv.remove();
+            } else {
+                afficherNotification('⚠️ Au moins un article est requis', 'warning');
+            }
+        }
+
+        function ajouterConteneur(articleIndex) {
+            const articleDiv = document.querySelector(`[data-article="${articleIndex}"]`);
+            const conteneursContainer = articleDiv.querySelector('.conteneurs-container');
+            const conteneurCount = conteneursContainer.children.length + 1;
+
+            const conteneurDiv = document.createElement('div');
+            conteneurDiv.className = 'conteneur-section';
+            conteneurDiv.setAttribute('data-conteneur', conteneurCount - 1);
+
+            conteneurDiv.innerHTML = `
+        <h5>Conteneur ${conteneurCount} <button type="button" onclick="supprimerConteneur(${articleIndex}, ${conteneurCount - 1})" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 2px 6px; margin-left: 10px; font-size: 10px;">❌</button></h5>
+        <div class="form-row">
+            <input type="text" name="conteneur" placeholder="N° Conteneur" required>
+            <select name="type" required>
+                <option value="">Type conteneur</option>
+                <option value="DRS">DRS - Dry Standard</option>
+                <option value="REF">REF - Refrigerated</option>
+                <option value="OPT">OPT - Open Top</option>
+                <option value="FLT">FLT - Flat Rack</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <select name="taille" required>
+                <option value="">Taille conteneur</option>
+                <option value="20">20 pieds</option>
+                <option value="40">40 pieds</option>
+                <option value="45">45 pieds</option>
+            </select>
+            <input type="text" name="plomb" placeholder="N° Plomb" required>
+        </div>
+    `;
+
             conteneursContainer.appendChild(conteneurDiv);
         }
 
-        // ✅ NOUVELLE FONCTION : Supprimer un conteneur
         function supprimerConteneur(articleIndex, conteneurIndex) {
             const articleDiv = document.querySelector(`[data-article="${articleIndex}"]`);
             const conteneurDiv = articleDiv.querySelector(`[data-conteneur="${conteneurIndex}"]`);
             const conteneursContainer = articleDiv.querySelector('.conteneurs-container');
-            
+
             if (conteneurDiv && conteneursContainer.children.length > 1) {
                 conteneurDiv.remove();
             } else {
@@ -960,442 +985,356 @@
         }
 
         // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Initialisation Pays A - Version nouveau format UEMOA');
-            
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🇸🇳 Initialisation Système Douanier Sénégal - Port de Dakar');
+
             try {
-                // Définir la date par défaut
+                // Définir les dates par défaut
                 const dateElement = document.getElementById('date_arrivee');
                 if (dateElement) {
                     dateElement.value = new Date().toISOString().split('T')[0];
                 }
 
-                // Date embarquement par défaut
                 const dateEmbElement = document.querySelector('input[name="date_emb"]');
                 if (dateEmbElement) {
                     dateEmbElement.value = new Date().toISOString().split('T')[0];
                 }
-                
+
                 const initTimeElement = document.getElementById('init-time');
                 if (initTimeElement) {
                     initTimeElement.textContent = new Date().toLocaleTimeString();
                 }
-                
+
                 // Vérifications périodiques
                 verifierStatutKit();
                 statusInterval = setInterval(verifierStatutKit, 30000);
-                
+
                 // Actualisation données
                 chargerDonnees();
                 refreshInterval = setInterval(chargerDonnees, 10000);
-                
+
                 // Gestionnaire de formulaire
                 const form = document.getElementById('manifeste-form');
                 if (form) {
                     form.addEventListener('submit', creerManifeste);
                 }
-                
-                ajouterInteraction('🏗️ Service démarré', 'Pays A opérationnel - Format UEMOA activé');
-                
+
+                ajouterInteraction('🇸🇳 Port de Dakar démarré', 'Sénégal - Pays de prime abord - Format UEMOA activé');
+
             } catch (error) {
-                console.error('❌ Erreur initialisation:', error);
+                console.error('❌ [SÉNÉGAL] Erreur initialisation:', error);
                 ajouterInteraction('⚠️ Initialisation', 'Erreur partielle: ' + (error.message || 'Erreur inconnue'));
             }
         });
 
-        // ✅ CRÉATION DE MANIFESTE AVEC NOUVEAU FORMAT UEMOA
+        // ✅ CRÉATION DE MANIFESTE - ÉTAPES 1-5 du workflow Sénégal
         async function creerManifeste(event) {
-    event.preventDefault();
-    
-    const submitBtn = document.getElementById('btn-submit');
-    if (!submitBtn) {
-        console.error('Bouton submit introuvable');
-        return;
-    }
-    
-    const originalText = submitBtn.innerHTML;
-    
-    // Disable button et show loading
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="loading"></div> Transmission en cours...';
-    
-    try {
-        console.log('📋 [Frontend] DÉBUT collecte données FORMAT UEMOA du formulaire...');
-        
-        // ✅ CORRECTION MAJEURE : Collecte des champs UEMOA EXACTS du HTML
-        const anneeManif = getFieldValue('annee_manif');
-        const bureauManif = getFieldValue('bureau_manif');
-        const numeroManif = getFieldValue('numero_manif');
-        const codeCgt = getFieldValue('code_cgt');
-        const consignataire = getFieldValue('consignataire');
-        const repertoire = getFieldValue('repertoire');
-        const navire = getFieldValue('navire');
-        const provenance = getFieldValue('provenance');
-        const pavillon = getFieldValue('pavillon');
-        const dateArrivee = getFieldValue('date_arrivee');
-        const valapprox = getFieldValue('valapprox', '0');
-        
-        console.log('🔍 [Frontend] Données UEMOA principales collectées:', {
-            anneeManif: `"${anneeManif}"`,
-            bureauManif: `"${bureauManif}"`,
-            numeroManif: `"${numeroManif}"`,
-            consignataire: `"${consignataire}"`,
-            navire: `"${navire}"`,
-            dateArrivee: `"${dateArrivee}"`
-        });
-        
-        // ✅ Collecte des articles UEMOA depuis le DOM
-        const articles = [];
-        const articleSections = document.querySelectorAll('.article-section');
-        
-        console.log(`🔍 [Frontend] Nombre d'articles trouvés: ${articleSections.length}`);
-        
-        articleSections.forEach((section, index) => {
-            console.log(`🔍 [Frontend] Traitement article ${index + 1}...`);
-            
-            const article = {
-                art: parseInt(section.querySelector('input[name="art"]')?.value) || (index + 1),
-                prec1: parseInt(section.querySelector('input[name="prec1"]')?.value) || 0,
-                prec2: parseInt(section.querySelector('input[name="prec2"]')?.value) || 0,
-                date_emb: section.querySelector('input[name="date_emb"]')?.value || dateArrivee,
-                lieu_emb: section.querySelector('input[name="lieu_emb"]')?.value || provenance,
-                pays_dest: section.querySelector('select[name="pays_dest"]')?.value || '',
-                ville_dest: section.querySelector('input[name="ville_dest"]')?.value || '',
-                connaissement: section.querySelector('input[name="connaissement"]')?.value || '',
-                expediteur: section.querySelector('input[name="expediteur"]')?.value || '',
-                destinataire: section.querySelector('input[name="destinataire"]')?.value || '',
-                voie_dest: section.querySelector('input[name="voie_dest"]')?.value || '',
-                ordre: section.querySelector('input[name="ordre"]')?.value || '',
-                marchandise: section.querySelector('input[name="marchandise"]')?.value || '',
-                poids: parseFloat(section.querySelector('input[name="poids"]')?.value) || 0,
-                nbre_colis: parseInt(section.querySelector('input[name="nbre_colis"]')?.value) || 1,
-                marque: section.querySelector('input[name="marque"]')?.value || 'NM',
-                mode_cond: section.querySelector('input[name="mode_cond"]')?.value || 'COLIS (PACKAGE)',
-                nbre_conteneur: parseInt(section.querySelector('input[name="nbre_conteneur"]')?.value) || 1,
-                conteneurs: []
-            };
-            
-            console.log(`🔍 [Frontend] Article ${index + 1} - pays_dest: "${article.pays_dest}", marchandise: "${article.marchandise}"`);
-            
-            // Collecte des conteneurs pour cet article
-            const conteneurSections = section.querySelectorAll('.conteneur-section');
-            conteneurSections.forEach(conteneurSection => {
-                const conteneur = {
-                    conteneur: conteneurSection.querySelector('input[name="conteneur"]')?.value || '',
-                    type: conteneurSection.querySelector('select[name="type"]')?.value || 'DRS',
-                    taille: conteneurSection.querySelector('select[name="taille"]')?.value || '40',
-                    plomb: conteneurSection.querySelector('input[name="plomb"]')?.value || ''
-                };
-                article.conteneurs.push(conteneur);
-            });
-            
-            articles.push(article);
-        });
-        
-        // ✅ Construction du payload FORMAT UEMOA
-        const manifesteUEMOA = {
-            annee_manif: anneeManif,
-            bureau_manif: bureauManif,
-            numero_manif: parseInt(numeroManif) || Date.now(),
-            code_cgt: codeCgt,
-            consignataire: consignataire,
-            repertoire: repertoire,
-            navire: navire,
-            provenance: provenance,
-            pavillon: pavillon,
-            date_arrivee: dateArrivee,
-            valapprox: parseFloat(valapprox) || 0,
-            nbre_article: articles.length,
-            articles: articles
-        };
-        
-        console.log('📦 [Frontend] Payload UEMOA final construit:', JSON.stringify(manifesteUEMOA, null, 2));
-        
-        // ✅ VALIDATION FORMAT UEMOA CORRIGÉE - Correspondant aux champs RÉELS du HTML
-        const validationErrors = [];
-        
-        console.log('🔍 [Frontend] DÉBUT validation UEMOA...');
-        
-        // Validation champs principaux UEMOA
-        if (!manifesteUEMOA.numero_manif || manifesteUEMOA.numero_manif === 0) {
-            validationErrors.push('Numéro de manifeste UEMOA obligatoire (numero_manif)');
-            console.error('❌ [Frontend] numero_manif manquant:', manifesteUEMOA.numero_manif);
-        }
-        
-        if (!manifesteUEMOA.consignataire || manifesteUEMOA.consignataire.trim() === '') {
-            validationErrors.push('Consignataire UEMOA obligatoire');
-            console.error('❌ [Frontend] consignataire manquant:', manifesteUEMOA.consignataire);
-        }
-        
-        if (!manifesteUEMOA.date_arrivee) {
-            validationErrors.push('Date d\'arrivée UEMOA obligatoire');
-            console.error('❌ [Frontend] date_arrivee manquante:', manifesteUEMOA.date_arrivee);
-        }
-        
-        if (manifesteUEMOA.articles.length === 0) {
-            validationErrors.push('Au moins un article UEMOA obligatoire');
-            console.error('❌ [Frontend] Aucun article trouvé');
-        } else {
-            // Validation des articles
-            manifesteUEMOA.articles.forEach((article, index) => {
-                console.log(`🔍 [Frontend] Validation article ${index + 1}:`, article);
-                
-                if (!article.marchandise || article.marchandise.trim() === '') {
-                    validationErrors.push(`Description de la marchandise obligatoire pour l'article ${index + 1}`);
-                    console.error(`❌ [Frontend] Article ${index + 1} - marchandise manquante:`, article.marchandise);
-                }
-                
-                if (!article.pays_dest || article.pays_dest.trim() === '') {
-                    validationErrors.push(`Pays de destination obligatoire pour l'article ${index + 1}`);
-                    console.error(`❌ [Frontend] Article ${index + 1} - pays_dest manquant:`, article.pays_dest);
-                }
-            });
-        }
-        
-        if (validationErrors.length > 0) {
-            console.error('❌ [Frontend] Validation UEMOA échouée:', validationErrors);
-            throw new Error('Validation échouée: ' + validationErrors.join(', '));
-        }
-        
-        console.log('✅ [Frontend] Validation UEMOA réussie, envoi vers backend...');
-        ajouterInteraction('📋 Création manifeste UEMOA', 
-            `N°${manifesteUEMOA.numero_manif} (${manifesteUEMOA.annee_manif}) - ${manifesteUEMOA.consignataire} vers ${manifesteUEMOA.articles.map(a => a.pays_dest).join(', ')}`);
-        
-        // ✅ APPEL API avec timeout amélioré
-        const response = await fetch(API_BASE + '/manifeste/creer', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Source-Country': 'CIV',
-                'X-Source-System': 'PAYS_A_FRONTEND',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(manifesteUEMOA),
-            signal: AbortSignal.timeout(90000) // ✅ 90 secondes pour CloudHub
-        });
-        
-        console.log(`🌐 [Frontend] Réponse HTTP: ${response.status} ${response.statusText}`);
-        
-        if (!response.ok) {
-            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-            try {
-                const errorText = await response.text();
-                const errorJson = JSON.parse(errorText);
-                errorMessage = getValue(errorJson, 'message', errorMessage);
-                console.error('❌ [Frontend] Erreur serveur:', errorJson);
-            } catch (parseError) {
-                console.warn('⚠️ [Frontend] Impossible de parser l\'erreur serveur');
-            }
-            throw new Error(errorMessage);
-        }
-        
-        const result = await response.json();
-        console.log('📋 [Frontend] Résultat backend:', getValue(result, 'status', 'UNKNOWN'));
-        console.log('📋 [Frontend] Réponse complète:', JSON.stringify(result, null, 2));
-        
-        // ✅ TRAITEMENT ULTRA-SÉCURISÉ DU RÉSULTAT
-        const resultStatus = getValue(result, 'status', 'UNKNOWN');
-        
-        if (resultStatus === 'SUCCESS') {
-            afficherNotification('✅ Manifeste UEMOA créé et transmis au Kit avec succès!', 'success');
-            
-            const latence = getValue(result, 'transmissionKit.succes.latence', null) ||
-                           getValue(result, 'transmission.latence', null) ||
-                           getValue(result, 'transmissionKit.latence', null) ||
-                           'N/A';
-            
-            const manifesteId = getValue(result, 'manifeste.id', null) ||
-                               getValue(result, 'manifeste.numero_manif', null) ||
-                               manifesteUEMOA.numero_manif ||
-                               'ID inconnu';
-            
-            ajouterInteraction('🚀 Transmission Kit UEMOA', 
-                `✅ Succès - N°${manifesteId} (${latence}ms)`);
-            
-            // Reset form
-            resetForm();
-            
-        } else if (resultStatus === 'PARTIAL_SUCCESS') {
-            afficherNotification('⚠️ Manifeste UEMOA créé localement mais erreur transmission Kit', 'warning');
-            
-            const erreur = getValue(result, 'transmissionKit.echec.erreur', null) ||
-                          getValue(result, 'transmission.erreur', null) ||
-                          getValue(result, 'erreur', null) ||
-                          'Erreur de transmission inconnue';
-            
-            ajouterInteraction('🚀 Transmission Kit UEMOA', `⚠️ Partiel - ${erreur}`);
-        } else {
-            const errorMessage = getValue(result, 'message', 'Erreur inconnue du serveur');
-            console.error('❌ [Frontend] Statut inattendu:', resultStatus, result);
-            throw new Error(errorMessage);
-        }
-        
-        // ✅ ACTUALISATION FORCÉE SÉCURISÉE
-        console.log('🔄 [Frontend] Actualisation forcée des statistiques...');
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await Promise.allSettled([
-                chargerStatistiques().catch(err => console.warn('Erreur stats:', err)),
-                chargerManifestes().catch(err => console.warn('Erreur manifestes:', err))
-            ]);
-            console.log('✅ [Frontend] Actualisation terminée');
-        } catch (refreshError) {
-            console.warn('Erreur actualisation:', refreshError);
-        }
-        
-    } catch (error) {
-        console.error('❌ [Frontend] Erreur création manifeste:', error);
-        const errorMessage = error.message || 'Erreur inconnue';
-        afficherNotification('❌ Erreur: ' + errorMessage, 'error');
-        ajouterInteraction('📋 Création manifeste UEMOA', `❌ Erreur: ${errorMessage}`);
-    } finally {
-        // ✅ RESTORE BUTTON TOUJOURS
-        try {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        } catch (restoreError) {
-            console.warn('Erreur restauration bouton:', restoreError);
-        }
-    }
-}
+            event.preventDefault();
 
-        // ✅ RESET FORM SÉCURISÉ
+            const submitBtn = document.getElementById('btn-submit');
+            if (!submitBtn) {
+                console.error('[SÉNÉGAL] Bouton submit introuvable');
+                return;
+            }
+
+            const originalText = submitBtn.innerHTML;
+
+            // Disable button et show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading"></div> Étapes 1-5 en cours...';
+
+            try {
+                console.log('🇸🇳 [SÉNÉGAL] DÉBUT WORKFLOW - Création manifeste Port de Dakar');
+
+                // Collecte des données UEMOA du formulaire
+                const manifesteUEMOA = {
+                    annee_manif: getFieldValue('annee_manif'),
+                    bureau_manif: getFieldValue('bureau_manif'),
+                    numero_manif: parseInt(getFieldValue('numero_manif')) || Date.now(),
+                    code_cgt: getFieldValue('code_cgt'),
+                    consignataire: getFieldValue('consignataire'),
+                    repertoire: getFieldValue('repertoire'),
+                    navire: getFieldValue('navire'),
+                    provenance: getFieldValue('provenance'),
+                    pavillon: getFieldValue('pavillon'),
+                    date_arrivee: getFieldValue('date_arrivee'),
+                    valapprox: parseFloat(getFieldValue('valapprox', '0')) || 0,
+                    nbre_article: 0,
+                    articles: []
+                };
+
+                // Collecte des articles depuis le DOM
+                const articleSections = document.querySelectorAll('.article-section');
+
+                articleSections.forEach((section, index) => {
+                    const article = {
+                        art: parseInt(section.querySelector('input[name="art"]')?.value) || (index + 1),
+                        prec1: parseInt(section.querySelector('input[name="prec1"]')?.value) || 0,
+                        prec2: parseInt(section.querySelector('input[name="prec2"]')?.value) || 0,
+                        date_emb: section.querySelector('input[name="date_emb"]')?.value || manifesteUEMOA.date_arrivee,
+                        lieu_emb: section.querySelector('input[name="lieu_emb"]')?.value || manifesteUEMOA.provenance,
+                        pays_dest: section.querySelector('select[name="pays_dest"]')?.value || '',
+                        ville_dest: section.querySelector('input[name="ville_dest"]')?.value || '',
+                        connaissement: section.querySelector('input[name="connaissement"]')?.value || '',
+                        expediteur: section.querySelector('input[name="expediteur"]')?.value || '',
+                        destinataire: section.querySelector('input[name="destinataire"]')?.value || '',
+                        voie_dest: section.querySelector('input[name="voie_dest"]')?.value || '',
+                        ordre: section.querySelector('input[name="ordre"]')?.value || '',
+                        marchandise: section.querySelector('input[name="marchandise"]')?.value || '',
+                        poids: parseFloat(section.querySelector('input[name="poids"]')?.value) || 0,
+                        nbre_colis: parseInt(section.querySelector('input[name="nbre_colis"]')?.value) || 1,
+                        marque: section.querySelector('input[name="marque"]')?.value || 'NM',
+                        mode_cond: section.querySelector('input[name="mode_cond"]')?.value || 'COLIS (PACKAGE)',
+                        nbre_conteneur: parseInt(section.querySelector('input[name="nbre_conteneur"]')?.value) || 1,
+                        conteneurs: []
+                    };
+
+                    // Collecte des conteneurs
+                    const conteneurSections = section.querySelectorAll('.conteneur-section');
+                    conteneurSections.forEach(conteneurSection => {
+                        const conteneur = {
+                            conteneur: conteneurSection.querySelector('input[name="conteneur"]')?.value || '',
+                            type: conteneurSection.querySelector('select[name="type"]')?.value || 'DRS',
+                            taille: conteneurSection.querySelector('select[name="taille"]')?.value || '40',
+                            plomb: conteneurSection.querySelector('input[name="plomb"]')?.value || ''
+                        };
+                        article.conteneurs.push(conteneur);
+                    });
+
+                    manifesteUEMOA.articles.push(article);
+                });
+
+                manifesteUEMOA.nbre_article = manifesteUEMOA.articles.length;
+
+                console.log('🇸🇳 [SÉNÉGAL] Manifeste UEMOA préparé:', manifesteUEMOA);
+
+                // Validation Sénégal
+                const erreurs = [];
+                if (!manifesteUEMOA.numero_manif) erreurs.push('Numéro manifeste requis');
+                if (!manifesteUEMOA.consignataire) erreurs.push('Consignataire requis');
+                if (!manifesteUEMOA.date_arrivee) erreurs.push('Date arrivée requise');
+                if (manifesteUEMOA.articles.length === 0) erreurs.push('Au moins un article requis');
+
+                if (erreurs.length > 0) {
+                    throw new Error('Validation échouée: ' + erreurs.join(', '));
+                }
+
+                ajouterInteraction('🇸🇳 ÉTAPES 1-3: Création manifeste',
+                    `N°${manifesteUEMOA.numero_manif} - ${manifesteUEMOA.consignataire} - ${manifesteUEMOA.articles.length} articles`);
+
+                // APPEL API Sénégal
+                const response = await fetch(API_BASE + '/manifeste/creer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Source-Country': 'SEN',
+                        'X-Source-System': 'SENEGAL_DOUANES_FRONTEND',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(manifesteUEMOA),
+                    signal: AbortSignal.timeout(90000)
+                });
+
+                console.log(`🇸🇳 [SÉNÉGAL] Réponse HTTP: ${response.status}`);
+
+                if (!response.ok) {
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = getValue(errorData, 'message', errorMessage);
+                    } catch (parseError) {
+                        console.warn('[SÉNÉGAL] Impossible de parser erreur serveur');
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const result = await response.json();
+                console.log('🇸🇳 [SÉNÉGAL] Résultat:', getValue(result, 'status', 'UNKNOWN'));
+
+                const resultStatus = getValue(result, 'status', 'UNKNOWN');
+
+                if (resultStatus === 'SUCCESS') {
+                    afficherNotification('🇸🇳 ✅ Workflow Sénégal réussi - Étapes 1-5 terminées!', 'success');
+
+                    const manifesteId = getValue(result, 'manifeste.numero_manif', manifesteUEMOA.numero_manif);
+                    const kitReussi = getValue(result, 'transmissionKit.reussie', false);
+
+                    if (kitReussi) {
+                        ajouterInteraction('🚀 ÉTAPES 4-5: Transmission Kit',
+                            `✅ Extraction transmise vers pays destination - Manifeste N°${manifesteId}`);
+                    } else {
+                        ajouterInteraction('⚠️ ÉTAPES 4-5: Kit MuleSoft',
+                            `Extraction non transmise - Mode local uniquement`);
+                    }
+
+                    // Reset form
+                    resetForm();
+
+                } else if (resultStatus === 'PARTIAL_SUCCESS') {
+                    afficherNotification('🇸🇳 ⚠️ Manifeste créé, erreur transmission Kit MuleSoft', 'warning');
+
+                    const erreurKit = getValue(result, 'transmissionKit.echec.erreur', 'Erreur Kit inconnue');
+                    ajouterInteraction('⚠️ ÉTAPES 4-5: Transmission Kit', `Échec - ${erreurKit}`);
+
+                } else {
+                    const errorMessage = getValue(result, 'message', 'Erreur serveur inconnue');
+                    throw new Error(errorMessage);
+                }
+
+                // Actualisation
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await Promise.allSettled([
+                    chargerStatistiques().catch(err => console.warn('Erreur stats:', err)),
+                    chargerManifestes().catch(err => console.warn('Erreur manifestes:', err))
+                ]);
+
+            } catch (error) {
+                console.error('🇸🇳 [SÉNÉGAL] Erreur workflow:', error);
+                const errorMessage = error.message || 'Erreur inconnue';
+                afficherNotification('🇸🇳 ❌ Erreur: ' + errorMessage, 'error');
+                ajouterInteraction('❌ Workflow Sénégal', `Erreur: ${errorMessage}`);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            }
+        }
+
+        // ✅ RESET FORM
         function resetForm() {
             try {
                 const form = document.getElementById('manifeste-form');
                 if (form) {
                     form.reset();
-                    
-                    // Réinitialiser les dates par défaut
-                    const dateElement = document.getElementById('date_arrivee');
-                    if (dateElement) {
-                        dateElement.value = new Date().toISOString().split('T')[0];
-                    }
-                    
-                    const dateEmbElement = document.querySelector('input[name="date_emb"]');
-                    if (dateEmbElement) {
-                        dateEmbElement.value = new Date().toISOString().split('T')[0];
-                    }
-                    
-                    // Réinitialiser les valeurs par défaut
+
+                    // Réinitialiser dates
+                    document.getElementById('date_arrivee').value = new Date().toISOString().split('T')[0];
+                    document.querySelector('input[name="date_emb"]').value = new Date().toISOString().split('T')[0];
+
+                    // Valeurs par défaut
                     document.getElementById('annee_manif').value = '2025';
                     document.getElementById('bureau_manif').value = '18N';
                     document.getElementById('code_cgt').value = '014';
                     document.getElementById('repertoire').value = '02402';
                     document.getElementById('valapprox').value = '0';
-                    
-                    console.log('✅ Formulaire UEMOA réinitialisé');
+
+                    console.log('🇸🇳 [SÉNÉGAL] Formulaire réinitialisé');
                 }
             } catch (error) {
-                console.warn('Erreur reset form:', error);
+                console.warn('[SÉNÉGAL] Erreur reset form:', error);
             }
         }
 
-        // Les autres fonctions restent identiques (verifierStatutKit, chargerStatistiques, etc.)
-        // [Je vais garder les fonctions existantes pour économiser l'espace, mais elles sont identiques]
-
+        // ✅ VÉRIFICATION STATUT KIT MULESOFT
         async function verifierStatutKit() {
             try {
-                const response = await fetch(API_BASE + '/health', {
-                    signal: AbortSignal.timeout(8000)
+                console.log('🔍 [SÉNÉGAL] Test statut Kit MuleSoft...');
+
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Source-Country': 'SEN',
+                        'X-Source-System': 'SENEGAL_FRONTEND'
+                    },
+                    signal: AbortSignal.timeout(15000)
                 });
-                
+
                 if (!response.ok) {
-                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 const data = await response.json();
-                
-                const kitAccessible = getValue(data, 'kit.accessible', false);
-                const kitStatus = getValue(data, 'kit.status', 'UNKNOWN');
-                const kitLatence = getValue(data, 'kit.latence', null);
-                
+                const kitInfo = getValue(data, 'kit', {});
+                const accessible = getValue(kitInfo, 'accessible', false);
+                const status = getValue(kitInfo, 'status', 'UNKNOWN');
+                const latence = getValue(kitInfo, 'latence', null);
+
                 const banner = document.getElementById('kit-banner');
                 const indicator = document.getElementById('kit-indicator');
                 const statusText = document.getElementById('kit-status-text');
                 const details = document.getElementById('kit-details');
-                
-                if (kitAccessible) {
+
+                if (accessible) {
                     if (banner) {
-                        const latenceText = kitLatence ? ' (' + kitLatence + 'ms)' : '';
                         banner.className = 'kit-status-banner connected';
-                        banner.innerHTML = '✅ Kit d\'Interconnexion opérationnel - ' + kitStatus + latenceText;
+                        banner.innerHTML = `✅ Kit MuleSoft opérationnel - ${status} ${latence ? `(${latence}ms)` : ''}`;
                     }
-                    
+
                     if (indicator) indicator.className = 'status-indicator connected';
                     if (statusText) statusText.textContent = 'Kit Opérationnel';
-                    if (details) details.textContent = kitLatence ? 'Latence: ' + kitLatence + 'ms' : 'Connecté';
-                    
+                    if (details) details.textContent = latence ? `Latence: ${latence}ms` : 'Connecté';
+
                     kitConnected = true;
                 } else {
                     if (banner) {
                         banner.className = 'kit-status-banner disconnected';
-                        banner.innerHTML = '⚠️ Kit d\'Interconnexion inaccessible - Service local opérationnel';
+                        banner.innerHTML = `⚠️ Kit MuleSoft inaccessible - Service local Sénégal opérationnel`;
                     }
-                    
+
                     if (indicator) indicator.className = 'status-indicator';
                     if (statusText) statusText.textContent = 'Kit Inaccessible';
                     if (details) details.textContent = 'Mode local uniquement';
-                    
+
                     kitConnected = false;
                 }
-                
+
             } catch (error) {
-                console.error('Erreur vérification Kit:', error);
+                console.error('❌ [SÉNÉGAL] Erreur vérification Kit:', error);
                 const banner = document.getElementById('kit-banner');
                 if (banner) {
                     banner.className = 'kit-status-banner disconnected';
-                    banner.innerHTML = '⚠️ Impossible de vérifier le Kit - Service local actif';
+                    banner.innerHTML = `⚠️ Kit MuleSoft non vérifiable - Service Sénégal actif`;
                 }
                 kitConnected = false;
             }
         }
 
+        // ✅ CHARGEMENT STATISTIQUES SÉNÉGAL
         async function chargerStatistiques() {
             try {
-                console.log('📊 Chargement statistiques...');
-                
-                const response = await fetch(API_BASE + '/statistiques', {
-                    signal: AbortSignal.timeout(8000)
+                console.log('📊 [SÉNÉGAL] Chargement statistiques Port de Dakar...');
+
+                const response = await fetch(`${API_BASE}/statistiques`, {
+                    signal: AbortSignal.timeout(15000)
                 });
-                
+
                 if (!response.ok) {
-                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 const data = await response.json();
-                console.log('📊 Réponse statistiques:', getValue(data, 'status', 'UNKNOWN'));
-                
+                console.log('📊 [SÉNÉGAL] Statistiques reçues:', getValue(data, 'status', 'UNKNOWN'));
+
                 const dataStatus = getValue(data, 'status', 'ERROR');
                 const stats = getValue(data, 'statistiques', {});
-                
+
                 if (stats && ['SUCCESS', 'PARTIAL', 'DEGRADED'].includes(dataStatus)) {
                     setElementText('stat-manifestes', getValue(stats, 'manifestesCreees', 0));
                     setElementText('stat-transmissions', getValue(stats, 'transmissionsKit', 0));
                     setElementText('stat-succes', getValue(stats, 'transmissionsReussies', 0));
-                    setElementText('taux-reussite', getValue(stats, 'tauxReussiteTransmission', 100) + '%');
-                    
-                    const latenceMoyenne = getValue(stats, 'performance.latenceMoyenne', 0) ||
-                                          getValue(stats, 'latenceMoyenne', 0) ||
-                                          0;
+
+                    const tauxReussite = getValue(stats, 'performance.tauxReussiteGlobal', 100) || 100;
+                    setElementText('taux-reussite', tauxReussite + '%');
+
+                    const latenceMoyenne = getValue(stats, 'performance.latenceMoyenne', 0) || 0;
                     setElementText('latence-moyenne', latenceMoyenne > 0 ? latenceMoyenne + ' ms' : '-- ms');
-                    
-                    console.log('✅ Statistiques mises à jour');
-                    
+
+                    console.log('✅ [SÉNÉGAL] Statistiques mises à jour');
+
                     const kitData = getValue(data, 'kit', {});
                     if (kitData) {
                         kitConnected = getValue(kitData, 'accessible', false);
                     }
-                    
+
                 } else {
-                    console.warn('⚠️ Statistiques non disponibles, statut:', dataStatus);
+                    console.warn('⚠️ [SÉNÉGAL] Statistiques non disponibles, statut:', dataStatus);
                 }
-                
+
             } catch (error) {
-                console.error('❌ Erreur chargement statistiques:', error);
-                
+                console.error('❌ [SÉNÉGAL] Erreur chargement statistiques:', error);
+
                 const elements = ['stat-manifestes', 'stat-transmissions', 'stat-succes'];
                 elements.forEach(id => {
                     try {
@@ -1405,66 +1344,70 @@
                             element.style.color = '#ffc107';
                         }
                     } catch (elemError) {
-                        console.warn('Erreur mise à jour ' + id + ':', elemError);
+                        console.warn(`[SÉNÉGAL] Erreur mise à jour ${id}:`, elemError);
                     }
                 });
             }
         }
 
+        // ✅ CHARGEMENT MANIFESTES SÉNÉGAL
         async function chargerManifestes() {
             try {
-                const response = await fetch(API_BASE + '/manifeste/lister?limite=5', {
-                    signal: AbortSignal.timeout(5000)
+                const response = await fetch(`${API_BASE}/manifeste/lister?limite=5`, {
+                    signal: AbortSignal.timeout(10000)
                 });
-                
+
                 if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
+                    throw new Error(`HTTP ${response.status}`);
                 }
-                
+
                 const data = await response.json();
                 const container = document.getElementById('manifestes-list');
-                
+
                 if (!container) return;
-                
+
                 const dataStatus = getValue(data, 'status', 'ERROR');
                 const manifestes = getValue(data, 'manifestes', []);
-                
+
                 if (dataStatus === 'SUCCESS' && Array.isArray(manifestes) && manifestes.length > 0) {
                     container.innerHTML = manifestes.map(manifeste => {
                         const transmission = getValue(manifeste, 'transmission', {});
                         const reussie = getValue(transmission, 'reussie', false);
                         const statutTransmission = getValue(transmission, 'statut', 'UNKNOWN');
-                        
-                        const transmissionClass = reussie ? 'transmitted' : 
-                                                 statutTransmission === 'ERREUR' ? 'error' : '';
-                        
-                        const statusBadge = reussie ? 
-                          '<span class="transmission-status success">✅ Transmis Kit</span>' :
-                          statutTransmission === 'ERREUR' ? 
-                          '<span class="transmission-status error">❌ Erreur Kit</span>' :
-                          '<span class="transmission-status pending">⏳ En attente</span>';
-                        
+
+                        const transmissionClass = reussie ? 'transmitted' :
+                            statutTransmission === 'ERREUR' ? 'error' : '';
+
+                        const statusBadge = reussie ?
+                            '<span class="transmission-status success">✅ Transmis Kit</span>' :
+                            statutTransmission === 'ERREUR' ?
+                                '<span class="transmission-status error">❌ Erreur Kit</span>' :
+                                '<span class="transmission-status pending">⏳ En attente</span>';
+
                         const numeroManifeste = getValue(manifeste, 'numero_manif', null) || getValue(manifeste, 'numeroManifeste', 'N/A');
-                        const transporteur = getValue(manifeste, 'consignataire', null) || getValue(manifeste, 'transporteur', 'N/A');
+                        const consignataire = getValue(manifeste, 'consignataire', null) || getValue(manifeste, 'transporteur', 'N/A');
                         const navire = getValue(manifeste, 'navire', 'N/A');
                         const nombreArticles = getValue(manifeste, 'nbre_article', 0) || getValue(manifeste, 'marchandises.nombre', 0);
                         const dateCreation = getValue(manifeste, 'dateCreation', null);
-                        
-                        return '<div class="manifeste-item ' + transmissionClass + '">' +
-                               '<div class="manifeste-header">N°' + numeroManifeste + ' - ' + transporteur + '</div>' +
-                               '<div class="manifeste-details">' +
-                               '🚢 ' + navire + '<br>' +
-                               '📦 ' + nombreArticles + ' article(s)<br>' +
-                               '📅 ' + (dateCreation ? new Date(dateCreation).toLocaleString('fr-FR') : 'N/A') + '<br>' +
-                               statusBadge +
-                               '</div></div>';
+
+                        return `
+                  <div class="manifeste-item ${transmissionClass}">
+                    <div class="manifeste-header">N°${numeroManifeste} - ${consignataire}</div>
+                    <div class="manifeste-details">
+                      🚢 ${navire}<br>
+                      📦 ${nombreArticles} article(s)<br>
+                      📅 ${dateCreation ? new Date(dateCreation).toLocaleString('fr-FR') : 'N/A'}<br>
+                      ${statusBadge}
+                    </div>
+                  </div>
+                `;
                     }).join('');
                 } else {
-                    container.innerHTML = '<p>Aucun manifeste trouvé</p>';
+                    container.innerHTML = '<p>Aucun manifeste trouvé au Port de Dakar</p>';
                 }
-                
+
             } catch (error) {
-                console.error('❌ Erreur chargement manifestes:', error);
+                console.error('❌ [SÉNÉGAL] Erreur chargement manifestes:', error);
                 const container = document.getElementById('manifestes-list');
                 if (container) {
                     container.innerHTML = '<p style="color: #ffc107;">⚠️ Erreur de chargement des manifestes</p>';
@@ -1472,284 +1415,244 @@
             }
         }
 
+        // ✅ TEST CONNEXION KIT MULESOFT
         async function testerConnexionKit() {
-            ajouterInteraction('🔧 Test connexion Kit', 'Test de connectivité...');
+            ajouterInteraction('🔧 Test Kit MuleSoft', 'Test de connectivité...');
             afficherNotification('🔧 Test Kit en cours...', 'info');
-            
+
             try {
-                const response = await fetch(API_BASE + '/health', {
-                    signal: AbortSignal.timeout(10000)
-                });
-                
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                console.log('🔧 [SÉNÉGAL] Test Kit MuleSoft avec retry...');
+
+                const tentatives = [
+                    { timeout: 15000, nom: 'Standard' },
+                    { timeout: 30000, nom: 'Étendu' },
+                    { timeout: 60000, nom: 'Maximum' }
+                ];
+
+                let dernièreErreur = null;
+
+                for (let i = 0; i < tentatives.length; i++) {
+                    const tentative = tentatives[i];
+                    console.log(`🔧 [SÉNÉGAL] Tentative ${i + 1}/${tentatives.length} (timeout: ${tentative.timeout}ms)...`);
+
+                    try {
+                        const startTime = Date.now();
+
+                        const response = await fetch(`${API_BASE}/health`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Source-Country': 'SEN',
+                                'X-Source-System': 'SENEGAL_TEST_KIT',
+                                'X-Test-Type': 'CONNECTIVITY'
+                            },
+                            signal: AbortSignal.timeout(tentative.timeout)
+                        });
+
+                        const duration = Date.now() - startTime;
+                        console.log(`🔧 [SÉNÉGAL] Réponse reçue en ${duration}ms (tentative ${i + 1})`);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+                        const kitInfo = getValue(data, 'kit', {});
+                        const accessible = getValue(kitInfo, 'accessible', false);
+                        const latence = getValue(kitInfo, 'latence', duration);
+                        const erreur = getValue(kitInfo, 'erreur', null);
+
+                        if (accessible) {
+                            console.log(`✅ [SÉNÉGAL] Kit accessible (tentative ${i + 1}, latence: ${latence}ms)`);
+                            afficherNotification(`✅ Kit MuleSoft accessible (${latence}ms) - Tentative ${i + 1}`, 'success');
+                            ajouterInteraction('🔧 Test Kit', `✅ Succès tentative ${i + 1} - Latence: ${latence}ms`);
+                            return true;
+                        } else {
+                            throw new Error(erreur || 'Kit inaccessible selon health check');
+                        }
+
+                    } catch (tentativeError) {
+                        dernièreErreur = tentativeError;
+                        console.warn(`⚠️ [SÉNÉGAL] Tentative ${i + 1} échouée:`, tentativeError.message);
+
+                        if (i < tentatives.length - 1) {
+                            console.log(`⏳ [SÉNÉGAL] Attente 3s avant tentative ${i + 2}...`);
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                        }
+                    }
                 }
-                
-                const data = await response.json();
-                const kitInfo = getValue(data, 'kit', {});
-                const accessible = getValue(kitInfo, 'accessible', false);
-                const latence = getValue(kitInfo, 'latence', 'N/A');
-                const erreur = getValue(kitInfo, 'erreur', null);
-                
-                if (accessible) {
-                    afficherNotification('✅ Kit accessible (' + latence + 'ms)', 'success');
-                    ajouterInteraction('🔧 Test Kit', '✅ Succès - Latence: ' + latence + 'ms');
-                    return true;
-                } else {
-                    throw new Error(erreur || 'Kit inaccessible');
-                }
-                
+
+                throw new Error(`Toutes les tentatives échouées. Dernière erreur: ${dernièreErreur?.message || 'Erreur inconnue'}`);
+
             } catch (error) {
-                console.error('❌ Test Kit échoué:', error);
-                const errorMessage = error.message || 'Erreur inconnue';
-                afficherNotification('❌ Kit inaccessible: ' + errorMessage, 'error');
-                ajouterInteraction('🔧 Test Kit', '❌ Échec: ' + errorMessage);
+                console.error('❌ [SÉNÉGAL] Test Kit échoué:', error);
+
+                let errorMessage = error.message || 'Erreur inconnue';
+
+                if (errorMessage.includes('signal timed out')) {
+                    errorMessage = 'Timeout - Kit MuleSoft met trop de temps à répondre';
+                } else if (errorMessage.includes('Failed to fetch')) {
+                    errorMessage = 'Impossible de joindre le Kit MuleSoft';
+                } else if (errorMessage.includes('NetworkError')) {
+                    errorMessage = 'Erreur réseau - Kit MuleSoft indisponible';
+                }
+
+                afficherNotification(`❌ Kit inaccessible: ${errorMessage}`, 'error');
+                ajouterInteraction('🔧 Test Kit', `❌ Échec: ${errorMessage}`);
                 return false;
             }
         }
 
+        // ✅ DIAGNOSTIC COMPLET
         async function lancerDiagnostic() {
-            ajouterInteraction('🩺 Diagnostic', 'Démarrage diagnostic...');
+            ajouterInteraction('🩺 Diagnostic', 'Diagnostic Port de Dakar...');
             afficherNotification('🩺 Diagnostic en cours...', 'info');
-            
+
             const resultats = {
-                serviceLocal: false,
+                serviceSenegal: false,
                 kitMulesoft: false,
                 baseDonnees: false
             };
-            
+
             try {
-                // Test service local
+                // Test service Sénégal
                 try {
-                    const healthResponse = await fetch(API_BASE + '/health', {
-                        signal: AbortSignal.timeout(5000)
+                    console.log('🩺 [SÉNÉGAL] Test service local...');
+                    const healthResponse = await fetch(`${API_BASE}/health`, {
+                        signal: AbortSignal.timeout(10000)
                     });
-                    resultats.serviceLocal = healthResponse.ok;
-                    
-                    // Test Kit MuleSoft
+                    resultats.serviceSenegal = healthResponse.ok;
+
                     if (healthResponse.ok) {
                         const healthData = await healthResponse.json();
                         const kitInfo = getValue(healthData, 'kit', {});
                         resultats.kitMulesoft = getValue(kitInfo, 'accessible', false);
                     }
                 } catch (healthError) {
-                    console.warn('Erreur test santé:', healthError);
+                    console.warn('🩺 [SÉNÉGAL] Erreur test santé:', healthError);
                 }
-                
-                // Test base de données via statistiques
+
+                // Test base de données
                 try {
-                    const statsResponse = await fetch(API_BASE + '/statistiques', {
-                        signal: AbortSignal.timeout(5000)
+                    console.log('🩺 [SÉNÉGAL] Test base de données...');
+                    const statsResponse = await fetch(`${API_BASE}/statistiques`, {
+                        signal: AbortSignal.timeout(10000)
                     });
                     if (statsResponse.ok) {
                         const statsData = await statsResponse.json();
                         resultats.baseDonnees = !!getValue(statsData, 'statistiques', null);
                     }
                 } catch (statsError) {
-                    console.warn('Erreur test base de données:', statsError);
+                    console.warn('🩺 [SÉNÉGAL] Erreur test BDD:', statsError);
                 }
-                
+
                 const testsReussis = Object.values(resultats).filter(Boolean).length;
                 const totalTests = Object.keys(resultats).length;
-                
-                const message = 'Terminé - ' + testsReussis + '/' + totalTests + ' composants opérationnels';
+
+                const message = `Terminé - ${testsReussis}/${totalTests} composants opérationnels`;
                 ajouterInteraction('🩺 Diagnostic', message);
-                
+
                 if (testsReussis >= 2) {
-                    afficherNotification('✅ Système fonctionnel - ' + message, 'success');
+                    afficherNotification(`✅ Système Sénégal fonctionnel - ${message}`, 'success');
+                } else if (testsReussis >= 1) {
+                    afficherNotification(`⚠️ Système Sénégal dégradé - ${message}`, 'warning');
                 } else {
-                    afficherNotification('⚠️ Problèmes détectés - ' + message, 'warning');
+                    afficherNotification(`❌ Système Sénégal en panne - ${message}`, 'error');
                 }
-                
+
             } catch (error) {
                 const errorMessage = error.message || 'Erreur inconnue';
-                ajouterInteraction('🩺 Diagnostic', '❌ Erreur - ' + errorMessage);
+                ajouterInteraction('🩺 Diagnostic', `❌ Erreur - ${errorMessage}`);
                 afficherNotification('❌ Diagnostic échoué', 'error');
             }
         }
 
-        async function chargerDonnees() {
-            try {
-                await Promise.allSettled([
-                    chargerStatistiques().catch(err => console.warn('Erreur stats:', err)),
-                    chargerManifestes().catch(err => console.warn('Erreur manifestes:', err))
-                ]);
-            } catch (error) {
-                console.error('Erreur chargement données:', error);
-            }
-        }
+        // ✅ FONCTIONS APUREMENT (ÉTAPES 18-19)
+        window.ouvrirApurement = async function (numeroManifeste, referencePaiement) {
+            console.log('🔓 [SÉNÉGAL] Ouverture interface apurement:', { numeroManifeste, referencePaiement });
 
-        function ajouterInteraction(title, details) {
-            try {
-                const container = document.getElementById('kit-interactions');
-                if (!container) return;
-                
-                const timestamp = new Date().toLocaleTimeString();
-                
-                const safeTitle = (title || 'Action').toString().substring(0, 100);
-                const safeDetails = (details || 'Détails non disponibles').toString().substring(0, 200);
-                
-                const item = document.createElement('div');
-                item.className = 'interaction-item';
-                
-                if (safeDetails.includes('❌') || safeDetails.includes('Erreur') || safeDetails.includes('Échec')) {
-                    item.classList.add('error');
-                } else if (safeDetails.includes('⚠️') || safeDetails.includes('Partiel')) {
-                    item.classList.add('warning');
-                }
-                
-                item.innerHTML = '<div class="interaction-header">' +
-                               '<div class="interaction-title">' + safeTitle + '</div>' +
-                               '<div class="interaction-time">' + timestamp + '</div>' +
-                               '</div>' +
-                               '<div>' + safeDetails + '</div>';
-                
-                container.prepend(item);
-                
-                // Garder seulement les 15 dernières interactions
-                const items = container.querySelectorAll('.interaction-item');
-                if (items.length > 15) {
-                    for (let i = 15; i < items.length; i++) {
-                        try {
-                            items[i].remove();
-                        } catch (removeError) {
-                            console.warn('Erreur suppression interaction:', removeError);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.warn('Erreur ajout interaction:', error);
-            }
-        }
-
-        function afficherNotification(message, type) {
-            try {
-                const notification = document.getElementById('notification');
-                if (!notification) return;
-                
-                const safeMessage = (message || 'Notification').toString().substring(0, 150);
-                const safeType = ['success', 'error', 'warning', 'info'].includes(type) ? type : 'info';
-                
-                notification.textContent = safeMessage;
-                notification.className = 'notification ' + safeType;
-                notification.classList.add('show');
-                
-                const duration = safeType === 'error' ? 7000 : safeType === 'warning' ? 5000 : 3000;
-                
-                setTimeout(() => {
-                    try {
-                        notification.classList.remove('show');
-                    } catch (hideError) {
-                        console.warn('Erreur masquage notification:', hideError);
-                    }
-                }, duration);
-            } catch (error) {
-                console.warn('Erreur affichage notification:', error);
-            }
-        }
-
-        // ✅ NOUVELLES FONCTIONS POUR L'APUREMENT
-        
-        // Ouvrir l'interface d'apurement (appelée depuis Pays B)
-        window.ouvrirApurement = async function(numeroManifeste, referencePaiement) {
-            console.log('🔓 [Pays A] Ouverture interface apurement:', { numeroManifeste, referencePaiement });
-            
-            // Afficher la section apurement
             document.getElementById('apurement-section').style.display = 'block';
-            
-            // Masquer toutes les sous-sections
             document.getElementById('apurement-info').style.display = 'none';
             document.getElementById('apurement-loading').style.display = 'block';
             document.getElementById('apurement-error').style.display = 'none';
             document.getElementById('apurement-success').style.display = 'none';
-            
-            // Stocker les références
+
             window.apurementData = { numeroManifeste, referencePaiement };
-            
-            // Faire défiler jusqu'à la section
             document.getElementById('apurement-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
+
             try {
-                // Charger les informations d'apurement
                 const response = await fetch(`${API_BASE}/apurement/traiter?numeroManifeste=${numeroManifeste}&referencePaiement=${referencePaiement}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Source-System': 'PAYS_A_FRONTEND',
-                        'X-Source-Country': 'CIV'
+                        'X-Source-System': 'SENEGAL_FRONTEND',
+                        'X-Source-Country': 'SEN'
                     }
                 });
-                
+
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.message || `HTTP ${response.status}`);
                 }
-                
+
                 const result = await response.json();
-                console.log('📋 [Pays A] Données apurement reçues:', result);
-                
+                console.log('📋 [SÉNÉGAL] Données apurement reçues:', result);
+
                 if (result.status === 'SUCCESS' && result.data) {
                     const data = result.data;
-                    
-                    // Vérifier si déjà apuré
+
                     if (data.apurement) {
                         throw new Error('Ce manifeste a déjà été apuré le ' + new Date(data.apurement.dateApurement).toLocaleString('fr-FR'));
                     }
-                    
-                    // Vérifier si peut être apuré
+
                     if (!data.peutEtreApure) {
-                        throw new Error('Ce manifeste ne peut pas être apuré. Statut actuel: ' + data.manifeste.statut);
+                        throw new Error('Ce manifeste ne peut pas être apuré. Statut: ' + data.manifeste.statut);
                     }
-                    
+
                     // Remplir les informations
                     document.getElementById('apu-numero-manifeste').textContent = data.manifeste.numero;
                     document.getElementById('apu-navire').textContent = data.manifeste.navire;
-                    document.getElementById('apu-transporteur').textContent = data.manifeste.transporteur;
+                    document.getElementById('apu-transporteur').textContent = data.manifeste.consignataire;
                     document.getElementById('apu-montant').textContent = data.autorisation.montant.toLocaleString();
                     document.getElementById('apu-pays').textContent = data.autorisation.paysDeclarant;
                     document.getElementById('apu-date-mainlevee').textContent = new Date(data.autorisation.dateReception).toLocaleString('fr-FR');
-                    
-                    // Réinitialiser le formulaire
+
+                    // Formulaire
                     document.getElementById('type-confirmation').value = 'DOUANE';
                     document.getElementById('agent-confirmation').value = '';
                     document.getElementById('observations').value = '';
-                    
-                    // Afficher le formulaire
+
                     document.getElementById('apurement-loading').style.display = 'none';
                     document.getElementById('apurement-info').style.display = 'block';
-                    
-                    ajouterInteraction('🔓 Apurement', `Interface apurement ouverte pour manifeste ${numeroManifeste}`);
-                    
+
+                    ajouterInteraction('🔓 Apurement', `Interface ouverte pour manifeste ${numeroManifeste}`);
+
                 } else {
                     throw new Error('Données apurement invalides');
                 }
-                
+
             } catch (error) {
-                console.error('❌ [Pays A] Erreur chargement apurement:', error);
+                console.error('❌ [SÉNÉGAL] Erreur chargement apurement:', error);
                 document.getElementById('apurement-loading').style.display = 'none';
                 document.getElementById('apurement-error').style.display = 'block';
                 document.getElementById('apurement-error-message').textContent = error.message;
                 ajouterInteraction('❌ Apurement', `Erreur: ${error.message}`);
             }
         };
-        
-        // Confirmer l'apurement
+
         async function confirmerApurement() {
             const btnConfirmer = document.getElementById('btn-confirmer-apurement');
             const originalText = btnConfirmer.innerHTML;
-            
+
             try {
-                // Validation
                 const agentConfirmation = document.getElementById('agent-confirmation').value.trim();
                 if (!agentConfirmation) {
                     throw new Error('Veuillez saisir le nom de l\'agent de confirmation');
                 }
-                
-                // Désactiver le bouton
+
                 btnConfirmer.disabled = true;
-                btnConfirmer.innerHTML = '<div class="loading"></div> Traitement en cours...';
-                
-                // Préparer les données
+                btnConfirmer.innerHTML = '<div class="loading"></div> Étapes 18-19 en cours...';
+
                 const apurementPayload = {
                     numeroManifeste: window.apurementData.numeroManifeste,
                     referencePaiement: window.apurementData.referencePaiement,
@@ -1757,61 +1660,52 @@
                     agentConfirmation: agentConfirmation,
                     observations: document.getElementById('observations').value.trim()
                 };
-                
-                console.log('📤 [Pays A] Envoi apurement:', apurementPayload);
-                
-                // Appel API
+
+                console.log('📤 [SÉNÉGAL] Envoi apurement:', apurementPayload);
+
                 const response = await fetch(`${API_BASE}/apurement/traiter`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Source-System': 'PAYS_A_FRONTEND',
-                        'X-Source-Country': 'CIV',
+                        'X-Source-System': 'SENEGAL_FRONTEND',
+                        'X-Source-Country': 'SEN',
                         'X-Payment-Reference': window.apurementData.referencePaiement
                     },
                     body: JSON.stringify(apurementPayload)
                 });
-                
+
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.message || `HTTP ${response.status}`);
                 }
-                
+
                 const result = await response.json();
-                console.log('✅ [Pays A] Apurement confirmé:', result);
-                
+                console.log('✅ [SÉNÉGAL] Apurement confirmé:', result);
+
                 if (result.status === 'SUCCESS') {
-                    // Afficher le succès
                     document.getElementById('apurement-info').style.display = 'none';
                     document.getElementById('apurement-success').style.display = 'block';
-                    
-                    // Remplir les détails du succès
+
                     document.getElementById('success-manifeste').textContent = result.apurement.numeroManifeste;
-                    document.getElementById('success-ref-apurement').textContent = result.apurement.id;
+                    document.getElementById('success-ref-apurement').textContent = result.bonEnlever.id;
                     document.getElementById('success-type-confirmation').textContent = result.apurement.typeConfirmation;
                     document.getElementById('success-agent').textContent = apurementPayload.agentConfirmation;
                     document.getElementById('success-date').textContent = new Date(result.apurement.dateApurement).toLocaleString('fr-FR');
-                    
-                    afficherNotification('✅ Apurement confirmé avec succès!', 'success');
-                    ajouterInteraction('✅ Apurement', `Manifeste ${result.apurement.numeroManifeste} apuré et levé`);
-                    
-                    // Notifier Pays B si la fenêtre parent existe
-                    if (window.opener && window.opener.notifierApurementReussi) {
-                        window.opener.notifierApurementReussi(result);
-                    }
-                    
-                    // Actualiser les données après 2 secondes
+
+                    afficherNotification('✅ Workflow Sénégal terminé - Étapes 18-19 complétées!', 'success');
+                    ajouterInteraction('✅ ÉTAPES 18-19', `Apurement et levée confirmés - Manifeste ${result.apurement.numeroManifeste}`);
+
                     setTimeout(() => {
                         chargerManifestes();
                         chargerStatistiques();
                     }, 2000);
-                    
+
                 } else {
                     throw new Error(result.message || 'Erreur lors de l\'apurement');
                 }
-                
+
             } catch (error) {
-                console.error('❌ [Pays A] Erreur confirmation apurement:', error);
+                console.error('❌ [SÉNÉGAL] Erreur confirmation apurement:', error);
                 afficherNotification('❌ Erreur: ' + error.message, 'error');
                 ajouterInteraction('❌ Apurement', `Erreur: ${error.message}`);
             } finally {
@@ -1819,27 +1713,105 @@
                 btnConfirmer.innerHTML = originalText;
             }
         }
-        
-        // Fermer l'interface d'apurement
+
         function fermerApurement() {
             document.getElementById('apurement-section').style.display = 'none';
             window.apurementData = null;
-            
-            // Si c'est une fenêtre popup, la fermer
+
             if (window.opener) {
                 window.close();
             }
         }
-        
-        // Vérifier si on doit ouvrir directement l'apurement (depuis URL)
-        document.addEventListener('DOMContentLoaded', function() {
+
+        // ✅ FONCTIONS UTILITAIRES
+        async function chargerDonnees() {
+            try {
+                await Promise.allSettled([
+                    chargerStatistiques().catch(err => console.warn('[SÉNÉGAL] Erreur stats:', err)),
+                    chargerManifestes().catch(err => console.warn('[SÉNÉGAL] Erreur manifestes:', err))
+                ]);
+            } catch (error) {
+                console.error('[SÉNÉGAL] Erreur chargement données:', error);
+            }
+        }
+
+        function ajouterInteraction(title, details) {
+            try {
+                const container = document.getElementById('kit-interactions');
+                if (!container) return;
+
+                const timestamp = new Date().toLocaleTimeString();
+                const safeTitle = (title || 'Action').toString().substring(0, 100);
+                const safeDetails = (details || 'Détails non disponibles').toString().substring(0, 200);
+
+                const item = document.createElement('div');
+                item.className = 'interaction-item';
+
+                if (safeDetails.includes('❌') || safeDetails.includes('Erreur') || safeDetails.includes('Échec')) {
+                    item.classList.add('error');
+                } else if (safeDetails.includes('⚠️') || safeDetails.includes('Partiel')) {
+                    item.classList.add('warning');
+                }
+
+                item.innerHTML = `
+          <div class="interaction-header">
+            <div class="interaction-title">${safeTitle}</div>
+            <div class="interaction-time">${timestamp}</div>
+          </div>
+          <div>${safeDetails}</div>
+        `;
+
+                container.prepend(item);
+
+                const items = container.querySelectorAll('.interaction-item');
+                if (items.length > 15) {
+                    for (let i = 15; i < items.length; i++) {
+                        try {
+                            items[i].remove();
+                        } catch (removeError) {
+                            console.warn('[SÉNÉGAL] Erreur suppression interaction:', removeError);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('[SÉNÉGAL] Erreur ajout interaction:', error);
+            }
+        }
+
+        function afficherNotification(message, type) {
+            try {
+                const notification = document.getElementById('notification');
+                if (!notification) return;
+
+                const safeMessage = (message || 'Notification').toString().substring(0, 150);
+                const safeType = ['success', 'error', 'warning', 'info'].includes(type) ? type : 'info';
+
+                notification.textContent = safeMessage;
+                notification.className = `notification ${safeType}`;
+                notification.classList.add('show');
+
+                const duration = safeType === 'error' ? 7000 : safeType === 'warning' ? 5000 : 3000;
+
+                setTimeout(() => {
+                    try {
+                        notification.classList.remove('show');
+                    } catch (hideError) {
+                        console.warn('[SÉNÉGAL] Erreur masquage notification:', hideError);
+                    }
+                }, duration);
+            } catch (error) {
+                console.warn('[SÉNÉGAL] Erreur affichage notification:', error);
+            }
+        }
+
+        // ✅ VÉRIFICATION URL APUREMENT
+        document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(window.location.search);
             const numeroManifeste = urlParams.get('apurement_manifeste');
             const referencePaiement = urlParams.get('apurement_paiement');
-            
+
             if (numeroManifeste && referencePaiement) {
-                console.log('🔓 [Pays A] Ouverture apurement depuis URL');
-                // Attendre un peu que tout soit initialisé
+                console.log('🔓 [SÉNÉGAL] Ouverture apurement depuis URL');
                 setTimeout(() => {
                     window.ouvrirApurement(numeroManifeste, referencePaiement);
                 }, 1000);
@@ -1852,11 +1824,12 @@
                 if (statusInterval) clearInterval(statusInterval);
                 if (refreshInterval) clearInterval(refreshInterval);
             } catch (error) {
-                console.warn('Erreur cleanup:', error);
+                console.warn('[SÉNÉGAL] Erreur cleanup:', error);
             }
         });
 
-        console.log('✅ Script Pays A avec nouveau format UEMOA chargé');
+        console.log('🇸🇳 ✅ Script Système Douanier Sénégal - Port de Dakar initialisé');
     </script>
 </body>
+
 </html>
