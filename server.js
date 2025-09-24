@@ -1,7 +1,7 @@
 // ============================================================================
-// SERVEUR LOCAL PAYS A (CÔTIER) - server.js
-// Côte d'Ivoire - Système Douanier Côtier
-// Compatible avec les APIs écrites pour Vercel
+// SERVEUR LOCAL SÉNÉGAL - server.js CORRIGÉ
+// Port de Dakar - Pays de prime abord
+// Compatible avec les APIs écrites pour Vercel selon rapport PDF UEMOA
 // ============================================================================
 
 const http = require('http');
@@ -9,14 +9,16 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-// Configuration du serveur - PAYS A
+// ✅ Configuration du serveur - SÉNÉGAL (PAYS A selon rapport PDF)
 const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
-const PAYS_CODE = 'CIV';
-const PAYS_NOM = 'Côte d\'Ivoire';
-const PAYS_TYPE = 'COTIER';
+const PAYS_CODE = 'SEN'; // ✅ CORRECTION: Sénégal au lieu de CIV
+const PAYS_NOM = 'Sénégal';
+const PAYS_TYPE = 'COTIER'; // ✅ Pays côtier selon rapport PDF
+const PAYS_ROLE = 'PAYS_PRIME_ABORD'; // ✅ Rôle selon rapport PDF
+const PORT_NAME = 'Port de Dakar'; // ✅ Port principal Sénégal
 
-console.log(`🏗️ Démarrage serveur ${PAYS_NOM} (${PAYS_TYPE})...`);
+console.log(`🇸🇳 Démarrage serveur ${PAYS_NOM} (${PAYS_TYPE}) - ${PAYS_ROLE}...`);
 
 // Types MIME
 const mimeTypes = {
@@ -31,14 +33,25 @@ const mimeTypes = {
   '.svg': 'image/svg+xml'
 };
 
-// Router pour les APIs PAYS A
+// ✅ Router pour les APIs SÉNÉGAL - Workflow libre pratique
 const apiRouter = {
+  // ✅ APIs principales Sénégal
   'GET /api/health': () => require('./api/health'),
   'GET /api/statistiques': () => require('./api/statistiques'),
+  
+  // ✅ ÉTAPES 1-5 : Création et transmission manifeste
   'POST /api/manifeste/creer': () => require('./api/manifeste/creer'),
   'GET /api/manifeste/lister': () => require('./api/manifeste/lister'),
+  
+  // ✅ ÉTAPE 17 : Réception informations déclaration/recouvrement
   'GET /api/mainlevee/autorisation': () => require('./api/mainlevee/autorisation'),
   'POST /api/mainlevee/autorisation': () => require('./api/mainlevee/autorisation'),
+  
+  // ✅ ÉTAPES 18-19 : Apurement et levée des marchandises
+  'GET /api/apurement/traiter': () => require('./api/apurement/traiter'),
+  'POST /api/apurement/traiter': () => require('./api/apurement/traiter'),
+  
+  // ✅ Tests Kit MuleSoft
   'GET /api/kit/test': () => require('./api/kit/test'),
   'POST /api/kit/test': () => require('./api/kit/test')
 };
@@ -95,18 +108,18 @@ function createVercelRequest(req, body, query) {
   };
 }
 
-// Serveur HTTP
+// ✅ Serveur HTTP Sénégal
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const method = req.method;
 
-  console.log(`${method} ${pathname} - [${PAYS_CODE}]`);
+  console.log(`${method} ${pathname} - [${PAYS_CODE}] ${PORT_NAME}`);
 
-  // CORS headers
+  // ✅ CORS headers pour interconnexion UEMOA
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Source-Country, X-Source-System, X-Correlation-ID, X-Authorization-Source');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Source-Country, X-Source-System, X-Correlation-ID, X-Authorization-Source, X-Payment-Reference');
 
   if (method === 'OPTIONS') {
     res.writeHead(200);
@@ -115,7 +128,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
-    // Router API
+    // ✅ Router API avec routes spécifiques Sénégal
     const route = `${method} ${pathname}`;
     let handler = apiRouter[route];
     
@@ -148,7 +161,7 @@ const server = http.createServer(async (req, res) => {
               try {
                 resolve(data ? JSON.parse(data) : {});
               } catch (error) {
-                console.error('Erreur parsing JSON:', error);
+                console.error(`❌ [${PAYS_CODE}] Erreur parsing JSON:`, error);
                 resolve({});
               }
             });
@@ -167,18 +180,19 @@ const server = http.createServer(async (req, res) => {
         await apiHandler(vercelReq, vercelRes);
         
       } catch (error) {
-        console.error('❌ Erreur API:', error);
+        console.error(`❌ [${PAYS_CODE}] Erreur API:`, error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           error: 'Internal Server Error', 
           message: error.message,
-          pays: PAYS_CODE
+          pays: PAYS_CODE,
+          port: PORT_NAME
         }));
       }
       return;
     }
 
-    // Servir les fichiers statiques
+    // ✅ Servir les fichiers statiques
     let filePath;
     if (pathname === '/') {
       filePath = path.join(__dirname, 'public', 'index.html');
@@ -194,7 +208,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': mimeType });
       fs.createReadStream(filePath).pipe(res);
     } else {
-      // 404
+      // ✅ 404 personnalisé Sénégal
       res.writeHead(404, { 'Content-Type': 'text/html' });
       res.end(`
         <html>
@@ -205,20 +219,37 @@ const server = http.createServer(async (req, res) => {
                 font-family: Arial, sans-serif; 
                 text-align: center; 
                 padding: 50px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #00a651 0%, #ff0000 50%, #ffcc00 100%);
                 color: white;
               }
               h1 { color: #e74c3c; }
               a { color: #3498db; text-decoration: none; }
-              .container { background: rgba(255,255,255,0.9); padding: 40px; border-radius: 15px; color: #333; display: inline-block; }
+              .container { 
+                background: rgba(255,255,255,0.9); 
+                padding: 40px; 
+                border-radius: 15px; 
+                color: #333; 
+                display: inline-block; 
+                max-width: 600px;
+                margin: 0 auto;
+              }
+              .flag { font-size: 3em; margin-bottom: 20px; }
+              .info { margin: 15px 0; color: #666; }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1>🏗️ ${PAYS_NOM} (${PAYS_TYPE})</h1>
+              <div class="flag">🇸🇳</div>
+              <h1>${PAYS_NOM} - ${PORT_NAME}</h1>
               <h2>404 - Page Non Trouvée</h2>
-              <p>La page ${pathname} n'existe pas sur le système douanier de ${PAYS_NOM}.</p>
-              <p><a href="/">← Retour au Dashboard ${PAYS_CODE}</a></p>
+              <p>La page ${pathname} n'existe pas sur le système douanier du ${PAYS_NOM}.</p>
+              <div class="info">
+                <strong>Rôle:</strong> ${PAYS_ROLE}<br>
+                <strong>Type:</strong> ${PAYS_TYPE}<br>
+                <strong>Port:</strong> ${PORT_NAME}<br>
+                <strong>Code pays:</strong> ${PAYS_CODE}
+              </div>
+              <p><a href="/">← Retour au Dashboard ${PAYS_NOM}</a></p>
             </div>
           </body>
         </html>
@@ -226,56 +257,76 @@ const server = http.createServer(async (req, res) => {
     }
 
   } catch (error) {
-    console.error('❌ Erreur serveur:', error);
+    console.error(`❌ [${PAYS_CODE}] Erreur serveur:`, error);
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ 
       error: 'Internal Server Error', 
       message: error.message,
-      pays: PAYS_CODE
+      pays: PAYS_CODE,
+      port: PORT_NAME
     }));
   }
 });
 
-// Démarrer le serveur
+// ✅ Démarrer le serveur Sénégal
 server.listen(PORT, HOST, () => {
   console.log('');
-  console.log('🌊 ============================================================');
-  console.log(`🏗️ Serveur ${PAYS_NOM} (${PAYS_TYPE}) démarré`);
+  console.log('🇸🇳 ═══════════════════════════════════════════════════════════');
+  console.log(`🇸🇳 Serveur ${PAYS_NOM} (${PAYS_ROLE}) démarré`);
   console.log(`🌍 URL: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}`);
   console.log(`🔍 Health: http://localhost:${PORT}/api/health`);
-  console.log(`🔗 Kit URL: https://kit-interconnexion-uemoa-v4320.m3jzw3-1.deu-c1.cloudhub.io`);
+  console.log(`🔗 Kit MuleSoft: http://localhost:8080/api/v1`);
   console.log(`⏹️  Arrêt: Ctrl+C`);
-  console.log('🌊 ============================================================');
+  console.log('🇸🇳 ═══════════════════════════════════════════════════════════');
   console.log('');
-  console.log(`🏗️ Simulateur ${PAYS_NOM} - Système Douanier Côtier`);
-  console.log('📋 Fonctionnalités disponibles:');
-  console.log('   • Création et transmission de manifestes');
-  console.log('   • Réception d\'autorisations de mainlevée depuis Kit MuleSoft');
+  console.log(`🇸🇳 Simulateur ${PAYS_NOM} - Système Douanier ${PAYS_ROLE}`);
+  console.log('📋 Fonctionnalités disponibles conformes au rapport PDF UEMOA:');
+  console.log('');
+  console.log('   🔥 WORKFLOW LIBRE PRATIQUE (21 étapes):');
+  console.log('   • ÉTAPES 1-3: Création et enregistrement manifeste');
+  console.log('   • ÉTAPES 4-5: Transmission extraction vers Kit MuleSoft');
+  console.log('   • ÉTAPE 17: Réception informations déclaration/recouvrement');
+  console.log('   • ÉTAPE 18: Apurement du manifeste');
+  console.log('   • ÉTAPE 19: Attribution main levée (bon à enlever)');
+  console.log('');
+  console.log('   🚛 WORKFLOW TRANSIT (16 étapes):');
+  console.log('   • ÉTAPES 1-6: Création déclaration transit au départ');
+  console.log('   • ÉTAPE 14: Réception message arrivée destination');
+  console.log('   • ÉTAPES 15-16: Apurement transit');
+  console.log('');
+  console.log('   🔧 OUTILS TECHNIQUES:');
   console.log('   • Interface web interactive avec monitoring temps réel');
-  console.log('   • Tests de connectivité Kit d\'Interconnexion');
-  console.log(`   • Code pays: ${PAYS_CODE} | Type: ${PAYS_TYPE}`);
+  console.log('   • Tests de connectivité Kit d\'Interconnexion MuleSoft');
+  console.log('   • Format UEMOA natif pour manifestes et déclarations');
+  console.log('');
+  console.log(`   📍 LOCALISATION: ${PORT_NAME} | Code: ${PAYS_CODE} | Type: ${PAYS_TYPE}`);
+  console.log('   🎯 DESTINATIONS: Mali, Burkina Faso, Niger, Côte d\'Ivoire, etc.');
+  console.log('');
+  console.log('   📋 ÉTAPES PAYS A SIMULÉES:');
+  console.log('   ✅ Création manifeste → Transmission Kit → Réception déclaration → Apurement/Levée');
+  console.log('   ⏳ PROCHAINES CORRECTIONS: Pays B (Mali), Kit MuleSoft, Commission UEMOA');
   console.log('');
 });
 
-// Gestion propre de l'arrêt
+// ✅ Gestion propre de l'arrêt
 process.on('SIGINT', () => {
-  console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM}...`);
+  console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM} (${PORT_NAME})...`);
   server.close(() => {
-    console.log('✅ Serveur arrêté proprement');
+    console.log(`✅ Serveur ${PAYS_NOM} arrêté proprement`);
     process.exit(0);
   });
 });
 
 process.on('SIGTERM', () => {
-  console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM}...`);
+  console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM} (${PORT_NAME})...`);
   server.close(() => {
-    console.log('✅ Serveur arrêté proprement');
+    console.log(`✅ Serveur ${PAYS_NOM} arrêté proprement`);
     process.exit(0);
   });
 });
 
-// Gestion des erreurs non capturées
+// ✅ Gestion des erreurs non capturées
 process.on('uncaughtException', (error) => {
   console.error(`❌ [${PAYS_CODE}] Erreur non capturée:`, error);
 });
