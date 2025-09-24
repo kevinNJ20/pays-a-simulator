@@ -2,20 +2,18 @@
   "name": "simulateur-senegal-dakar",
   "version": "1.0.0",
   "description": "Simulateur Système Douanier Sénégal Port de Dakar - Interconnexion UEMOA",
-  "main": "server.js",
+  "main": "api/health.js",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js",
+    "dev": "vercel dev",
     "build": "echo 'No build required'",
-    "vercel-dev": "vercel dev",
-    "local": "node server.js"
+    "start": "node api/health.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
     "cors": "^2.8.5"
   },
   "engines": {
-    "node": "22.x"
+    "node": "18.x"
   },
   "keywords": ["douanes", "uemoa", "mulesoft", "interconnexion", "senegal", "dakar"],
   "author": "Sénégal - Port de Dakar"
