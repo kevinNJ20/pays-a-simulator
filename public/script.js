@@ -5,7 +5,7 @@ console.log('🇸🇳 ✅ Script Système Douanier Sénégal - Port de Dakar ini
 
 // Configuration API - SÉNÉGAL
 const API_BASE = window.location.origin + '/api';
-const KIT_MULESOFT_URL = 'http://localhost:8080/api/v1';
+const KIT_MULESOFT_URL = process.env.KIT_MULESOFT_URL || 'http://localhost:8080/api/v1';
 window.SYSTEME_TYPE = 'PAYS_PRIME_ABORD';
 window.PAYS_CODE = 'SEN';
 
