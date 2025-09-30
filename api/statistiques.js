@@ -1,6 +1,61 @@
 const database = require('../lib/database');
 const kitClient = require('../lib/kit-client');
 
+// ✅ AJOUT: Fonction pour calculer les métriques Sénégal
+function calculerMetriquesSenegal(stats, interactions) {
+  try {
+    // Calcul taux de réussite global
+    const tauxReussiteGlobal = stats.transmissionsKit > 0 
+      ? Math.round((stats.transmissionsReussies / stats.transmissionsKit) * 100) 
+      : 100;
+
+    // Calcul latence moyenne depuis les interactions
+    const interactionsAvecLatence = interactions.filter(i => i.latence && i.latence > 0);
+    const latenceMoyenne = interactionsAvecLatence.length > 0
+      ? Math.round(interactionsAvecLatence.reduce((sum, i) => sum + i.latence, 0) / interactionsAvecLatence.length)
+      : 0;
+
+    // Tendances sur les dernières 24h
+    const maintenant = new Date();
+    const hier = new Date(maintenant.getTime() - 24 * 60 * 60 * 1000);
+    
+    const interactionsRecentes = interactions.filter(i => 
+      i.timestamp && new Date(i.timestamp) >= hier
+    );
+
+    const tendances = {
+      dernieres24h: {
+        total: interactionsRecentes.length,
+        succes: interactionsRecentes.filter(i => 
+          i.type && (i.type.includes('SUCCESS') || i.type.includes('REUSSI'))
+        ).length,
+        erreurs: interactionsRecentes.filter(i => 
+          i.type && (i.type.includes('ERROR') || i.type.includes('ERREUR'))
+        ).length
+      }
+    };
+
+    return {
+      tauxReussiteGlobal,
+      latenceMoyenne,
+      tendances
+    };
+  } catch (error) {
+    console.warn('[SÉNÉGAL] Erreur calcul métriques:', error);
+    return {
+      tauxReussiteGlobal: 100,
+      latenceMoyenne: 0,
+      tendances: {
+        dernieres24h: {
+          total: 0,
+          succes: 0,
+          erreurs: 0
+        }
+      }
+    };
+  }
+}
+
 module.exports = async (req, res) => {
   // Configuration CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
