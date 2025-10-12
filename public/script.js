@@ -689,8 +689,9 @@ function mettreAJourCompteursFiltre(manifestes) {
     const countTransmis = manifestes.filter(m => 
         m.statut === 'TRANSMIS_VERS_DESTINATION'
     ).length;
+    // ✅ CORRECTION: Inclure aussi MAINLEVEE_ATTRIBUEE dans les apurés
     const countApures = manifestes.filter(m => 
-        m.statut === 'APURE' || m.apurement?.effectue
+        m.statut === 'APURE' || m.statut === 'MAINLEVEE_ATTRIBUEE' || m.apurement?.effectue
     ).length;
     
     setElementText('count-tous', countTous);
@@ -710,6 +711,10 @@ function afficherManifestesFiltrés(manifestes) {
         manifestesFiltres = manifestes.filter(m => {
             if (currentFilter === 'DECLARATION_RECUE') {
                 return m.statut === 'DECLARATION_RECUE' && !m.apurement?.effectue;
+            }
+            // ✅ CORRECTION: Filtre APURE inclut aussi MAINLEVEE_ATTRIBUEE
+            if (currentFilter === 'APURE') {
+                return m.statut === 'APURE' || m.statut === 'MAINLEVEE_ATTRIBUEE' || m.apurement?.effectue;
             }
             return m.statut === currentFilter;
         });
@@ -742,19 +747,40 @@ function genererHTMLManifeste(manifeste) {
         transmissionClass = 'ready-for-apurement';
     }
     
-    const statusBadge = statut === 'DECLARATION_RECUE' && !manifeste.apurement?.effectue ?
-        '<span class="transmission-status ready-apurement">🔓 PRÊT APUREMENT</span>' :
-        reussie ?
-        '<span class="transmission-status success">✅ Transmis Kit</span>' :
-        statutTransmission === 'ERREUR' ?
-        '<span class="transmission-status error">❌ Erreur Kit</span>' :
-        '<span class="transmission-status pending">⏳ En attente</span>';
+    // ✅ CORRECTION: Badge pour manifestes apurés avec main levée
+    let statusBadge;
+    if (statut === 'MAINLEVEE_ATTRIBUEE' || manifeste.mainlevee?.attribuee) {
+        statusBadge = '<span class="transmission-status success">✅ Apuré + Main Levée</span>';
+    } else if (statut === 'APURE') {
+        statusBadge = '<span class="transmission-status success">✅ Apuré</span>';
+    } else if (statut === 'DECLARATION_RECUE' && !manifeste.apurement?.effectue) {
+        statusBadge = '<span class="transmission-status ready-apurement">🔓 PRÊT APUREMENT</span>';
+    } else if (reussie) {
+        statusBadge = '<span class="transmission-status success">✅ Transmis Kit</span>';
+    } else if (statutTransmission === 'ERREUR') {
+        statusBadge = '<span class="transmission-status error">❌ Erreur Kit</span>';
+    } else {
+        statusBadge = '<span class="transmission-status pending">⏳ En attente</span>';
+    }
 
     const numeroManifeste = getValue(manifeste, 'numero_manif', null) || getValue(manifeste, 'numeroManifeste', 'N/A');
     const consignataire = getValue(manifeste, 'consignataire', null) || getValue(manifeste, 'transporteur', 'N/A');
     const navire = getValue(manifeste, 'navire', 'N/A');
     const nombreArticles = getValue(manifeste, 'nbre_article', 0) || getValue(manifeste, 'marchandises.nombre', 0);
     const dateCreation = getValue(manifeste, 'dateCreation', null);
+    
+    // ✅ CORRECTION: Afficher info apurement si effectué
+    let infoApurement = '';
+    if (manifeste.apurement?.effectue) {
+        const dateApurement = getValue(manifeste, 'apurement.dateApurement', null);
+        const agent = getValue(manifeste, 'apurement.agentConfirmation', 'N/A');
+        infoApurement = `
+            <div style="margin-top: 10px; padding: 10px; background: #d4edda; border-radius: 5px; font-size: 0.85em;">
+                🔓 Apuré le ${dateApurement ? new Date(dateApurement).toLocaleString('fr-FR') : 'N/A'}<br>
+                👤 Agent: ${agent}
+            </div>
+        `;
+    }
     
     // ✅ NOUVEAU: Bouton apurement si éligible
     let boutonApurement = '';
@@ -779,6 +805,7 @@ function genererHTMLManifeste(manifeste) {
                 📦 ${nombreArticles} article(s)<br>
                 📅 ${dateCreation ? new Date(dateCreation).toLocaleString('fr-FR') : 'N/A'}<br>
                 ${statusBadge}
+                ${infoApurement}
             </div>
             ${boutonApurement}
         </div>
