@@ -492,6 +492,24 @@
             flex-wrap: wrap;
         }
 
+        .marchandise-transit-section {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        .marchandise-transit-section h4 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .transit-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
         .transmission-status {
             margin-top: 5px;
             padding: 3px 8px;
@@ -863,6 +881,80 @@
                         🩺 Diagnostic Complet
                     </button>
                 </div>
+            </section>
+
+            <!-- ✅ NOUVEAU: Section Transit -->
+            <section class="card">
+                <h2>🚛 Créer une Déclaration Transit (Format UEMOA - Port de Dakar)</h2>
+                <form id="transit-form">
+                    <div class="form-section">
+                        <h3>📋 Informations Transit</h3>
+                        <div class="form-row">
+                            <input type="text" id="transit-numero" placeholder="Numéro déclaration transit" required>
+                            <input type="text" id="transit-transporteur" placeholder="Transporteur" required>
+                        </div>
+                        <div class="form-row">
+                            <select id="transit-mode" required>
+                                <option value="">Mode de transport</option>
+                                <option value="ROUTIER">🚛 ROUTIER</option>
+                                <option value="FERROVIAIRE">🚂 FERROVIAIRE</option>
+                                <option value="AERIEN">✈️ AÉRIEN</option>
+                                <option value="FLUVIAL">⛴️ FLUVIAL</option>
+                            </select>
+                            <select id="transit-destination" required>
+                                <option value="">Pays de destination</option>
+                                <option value="MALI">🇲🇱 MALI</option>
+                                <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
+                                <option value="NIGER">🇳🇪 NIGER</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <input type="text" id="transit-itineraire" placeholder="Itinéraire (ex: Dakar-Bamako via Kayes)" required>
+                            <input type="text" id="transit-delai" placeholder="Délai de route (ex: 72 heures)" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📦 Marchandises en Transit</h3>
+                        <div id="transit-marchandises-container">
+                            <div class="marchandise-transit-section" data-marchandise="0">
+                                <h4>Marchandise 1</h4>
+                                <div class="form-row">
+                                    <input type="text" name="designation" placeholder="Désignation marchandise" required>
+                                    <input type="number" name="poids" placeholder="Poids total (kg)" step="0.01" required>
+                                </div>
+                                <div class="form-row">
+                                    <input type="number" name="nombreColis" placeholder="Nombre de colis" required>
+                                    <input type="text" name="marques" placeholder="Marques et numéros">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="ajouterMarchandiseTransit()">➕ Ajouter Marchandise</button>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>💰 Garanties</h3>
+                        <div class="form-row">
+                            <input type="number" id="transit-caution" placeholder="Montant caution (FCFA)" step="0.01" value="0">
+                            <input type="text" id="transit-ref-caution" placeholder="Référence caution">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="btn-submit-transit">
+                        🚛 Créer Déclaration Transit (Étapes 1-6)
+                    </button>
+                </form>
+            </section>
+
+            <!-- ✅ NOUVEAU: Section Liste Transits -->
+            <section class="card">
+                <h2>🚛 Déclarations Transit - Port de Dakar</h2>
+                <div class="transit-list" id="transits-list">
+                    <p>Chargement des transits...</p>
+                </div>
+                <button class="btn btn-test" onclick="chargerTransits()" style="width: 100%; margin-top: 15px;">
+                    🔄 Actualiser Transits
+                </button>
             </section>
 
             <section class="card">

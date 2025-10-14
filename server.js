@@ -53,6 +53,18 @@ const apiRouter = {
   
   // ✅ Tests Kit MuleSoft
   'GET /api/kit/test': () => require('./api/kit/test'),
+  'POST /api/kit/test': () => require('./api/kit/test'),
+
+  //✅ WORKFLOW TRANSIT
+  // ÉTAPES 1-6 : Création déclaration transit
+  'POST /api/transit/creer': () => require('./api/transit/creer'),
+  'GET /api/transit/lister': () => require('./api/transit/lister'),
+  
+  // ÉTAPE 14 : Réception message arrivée
+  'POST /api/transit/arrivee': () => require('./api/transit/arrivee'),
+  
+  // ✅ Tests Kit MuleSoft
+  'GET /api/kit/test': () => require('./api/kit/test'),
   'POST /api/kit/test': () => require('./api/kit/test')
 };
 

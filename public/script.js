@@ -10,6 +10,7 @@ let kitConnected = false;
 let articleCount = 1;
 let currentFilter = 'TOUS';
 let tousLesManifestes = []; // ✅ NOUVEAU: Cache de tous les manifestes
+let marchandiseTransitCount = 1;
 
 // ✅ FONCTION HELPER pour valeurs de champs
 function getFieldValue(id, defaultValue = '') {
@@ -830,6 +831,200 @@ window.filtrerManifestes = function(filtre) {
     afficherManifestesFiltrés(tousLesManifestes);
 };
 
+// Ajouter une marchandise transit
+function ajouterMarchandiseTransit() {
+    marchandiseTransitCount++;
+    const container = document.getElementById('transit-marchandises-container');
+    const marchandiseDiv = document.createElement('div');
+    marchandiseDiv.className = 'marchandise-transit-section';
+    marchandiseDiv.setAttribute('data-marchandise', marchandiseTransitCount - 1);
+    
+    marchandiseDiv.innerHTML = `
+        <h4>Marchandise ${marchandiseTransitCount} 
+            <button type="button" onclick="supprimerMarchandiseTransit(${marchandiseTransitCount - 1})" 
+                    style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 4px 8px; margin-left: 10px;">❌</button>
+        </h4>
+        <div class="form-row">
+            <input type="text" name="designation" placeholder="Désignation marchandise" required>
+            <input type="number" name="poids" placeholder="Poids total (kg)" step="0.01" required>
+        </div>
+        <div class="form-row">
+            <input type="number" name="nombreColis" placeholder="Nombre de colis" required>
+            <input type="text" name="marques" placeholder="Marques et numéros">
+        </div>
+    `;
+    
+    container.appendChild(marchandiseDiv);
+}
+
+function supprimerMarchandiseTransit(marchandiseIndex) {
+    const marchandiseDiv = document.querySelector(`[data-marchandise="${marchandiseIndex}"]`);
+    if (marchandiseDiv && document.querySelectorAll('.marchandise-transit-section').length > 1) {
+        marchandiseDiv.remove();
+    } else {
+        afficherNotification('⚠️ Au moins une marchandise est requise', 'warning');
+    }
+}
+
+// Créer déclaration transit - ÉTAPES 1-6
+async function creerDeclarationTransit(event) {
+    event.preventDefault();
+    
+    const submitBtn = document.getElementById('btn-submit-transit');
+    if (!submitBtn) return;
+    
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading"></div> Étapes 1-6 en cours...';
+    
+    try {
+        console.log('🚛 [SÉNÉGAL] DÉBUT WORKFLOW TRANSIT - Création déclaration');
+        
+        // Collecter données transit
+        const transitData = {
+            numeroDeclaration: getFieldValue('transit-numero'),
+            transporteur: getFieldValue('transit-transporteur'),
+            modeTransport: getFieldValue('transit-mode'),
+            paysDestination: getFieldValue('transit-destination'),
+            itineraire: getFieldValue('transit-itineraire'),
+            delaiRoute: getFieldValue('transit-delai'),
+            cautionRequise: parseFloat(getFieldValue('transit-caution', '0')) || 0,
+            referenceCaution: getFieldValue('transit-ref-caution'),
+            marchandises: []
+        };
+        
+        // Collecter marchandises
+        const marchandiseSections = document.querySelectorAll('.marchandise-transit-section');
+        marchandiseSections.forEach(section => {
+            const marchandise = {
+                designation: section.querySelector('input[name="designation"]')?.value || '',
+                poids: parseFloat(section.querySelector('input[name="poids"]')?.value) || 0,
+                nombreColis: parseInt(section.querySelector('input[name="nombreColis"]')?.value) || 1,
+                marques: section.querySelector('input[name="marques"]')?.value || ''
+            };
+            transitData.marchandises.push(marchandise);
+        });
+        
+        // Validation
+        if (!transitData.numeroDeclaration || !transitData.transporteur || !transitData.paysDestination) {
+            throw new Error('Informations transit incomplètes');
+        }
+        
+        if (transitData.marchandises.length === 0) {
+            throw new Error('Au moins une marchandise requise');
+        }
+        
+        ajouterInteraction('🚛 ÉTAPES 1-6: Création transit',
+            `Transit ${transitData.numeroDeclaration} → ${transitData.paysDestination}`);
+        
+        // Appel API
+        const response = await fetch(API_BASE + '/transit/creer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Source-Country': 'SEN',
+                'X-Source-System': 'SENEGAL_TRANSIT_FRONTEND'
+            },
+            body: JSON.stringify(transitData),
+            signal: AbortSignal.timeout(90000)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || `HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'SUCCESS' || result.status === 'PARTIAL_SUCCESS') {
+            afficherNotification('🚛 ✅ Déclaration transit créée - Étapes 1-6 terminées!', 'success');
+            
+            const transitId = result.transit?.numeroDeclaration;
+            const kitReussi = result.transmissionKit?.reussie;
+            
+            if (kitReussi) {
+                ajouterInteraction('🚀 ÉTAPES 10-11: Transmission Kit',
+                    `✅ Copie transit transmise vers Mali - Transit ${transitId}`);
+            } else {
+                ajouterInteraction('⚠️ ÉTAPES 10-11: Kit d\'Interconnexion',
+                    `Copie non transmise - Mode local uniquement`);
+            }
+            
+            // Reset formulaire
+            document.getElementById('transit-form').reset();
+            
+            // Recharger données
+            await chargerTransits();
+            await chargerStatistiques();
+            
+        } else {
+            throw new Error(result.message || 'Erreur création transit');
+        }
+        
+    } catch (error) {
+        console.error('🚛 [SÉNÉGAL] Erreur workflow transit:', error);
+        afficherNotification('🚛 ❌ Erreur: ' + error.message, 'error');
+        ajouterInteraction('❌ Workflow Transit', `Erreur: ${error.message}`);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+}
+
+// Charger liste transits
+async function chargerTransits() {
+    try {
+        const response = await fetch(`${API_BASE}/transit/lister?limite=20`, {
+            signal: AbortSignal.timeout(10000)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'SUCCESS' && Array.isArray(data.transits)) {
+            const container = document.getElementById('transits-list');
+            if (!container) return;
+            
+            if (data.transits.length > 0) {
+                container.innerHTML = data.transits.map(transit => `
+                    <div class="manifeste-item transmitted">
+                        <div class="manifeste-header">
+                            <span>🚛 ${transit.numeroDeclaration} - ${transit.transporteur}</span>
+                            <span class="transmission-status ${transit.statut === 'ARRIVEE_CONFIRMEE' ? 'success' : 'pending'}">
+                                ${transit.statut === 'ARRIVEE_CONFIRMEE' ? '✅ Arrivée confirmée' : 
+                                  transit.statut === 'TRANSIT_APURE' ? '✅ Apuré' : '⏳ En transit'}
+                            </span>
+                        </div>
+                        <div class="manifeste-details">
+                            🎯 Destination: ${transit.paysDestination}<br>
+                            🚚 Mode: ${transit.modeTransport}<br>
+                            📍 Itinéraire: ${transit.itineraire}<br>
+                            ⏱️ Délai: ${transit.delaiRoute}<br>
+                            📦 Marchandises: ${transit.marchandises.nombre} (${transit.marchandises.poidsTotal.toLocaleString()} kg)<br>
+                            📅 Créé le: ${new Date(transit.dateCreation).toLocaleString('fr-FR')}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>Aucune déclaration transit</p>
+                    </div>
+                `;
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ [SÉNÉGAL] Erreur chargement transits:', error);
+    }
+}
+
 // ✅ TEST CONNEXION KIT D'INTERCONNEXION
 async function testerConnexionKit() {
     ajouterInteraction('🔧 Test Kit d\'Interconnexion', 'Test de connectivité...');
@@ -1220,6 +1415,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(window.location.search);
     const numeroManifeste = urlParams.get('apurement_manifeste');
     const referencePaiement = urlParams.get('apurement_paiement');
+    // Ajouter handler formulaire transit
+    const transitForm = document.getElementById('transit-form');
+    if (transitForm) {
+        transitForm.addEventListener('submit', creerDeclarationTransit);
+    }
 
     if (numeroManifeste && referencePaiement) {
         console.log('🔓 [SÉNÉGAL] Ouverture apurement depuis URL');
@@ -1227,6 +1427,9 @@ document.addEventListener('DOMContentLoaded', function () {
             window.ouvrirApurement(numeroManifeste, referencePaiement);
         }, 1000);
     }
+
+    // Charger transits
+    chargerTransits();
 });
 
 // Cleanup
