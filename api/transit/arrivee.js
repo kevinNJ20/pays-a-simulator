@@ -1,5 +1,5 @@
 // ============================================================================
-// SÉNÉGAL - API Réception Message Arrivée Transit (ÉTAPE 14)
+// SÉNÉGAL - API Réception Message Arrivée Transit (ÉTAPE 14) - CORRIGÉ
 // Fichier: api/transit/arrivee.js
 // ============================================================================
 
@@ -21,13 +21,26 @@ module.exports = async (req, res) => {
       console.log('📥 [SÉNÉGAL] ÉTAPE 14: Réception message arrivée transit depuis Mali');
       console.log('📋 [SÉNÉGAL] Données reçues:', JSON.stringify(req.body, null, 2));
       
+      // ✅ CORRECTION: Support des deux formats (snake_case et camelCase)
       const messageArrivee = req.body.messageArrivee || req.body;
       
+      // Normaliser les champs pour accepter les deux formats
+      const numeroDeclaration = messageArrivee.numeroDeclaration || messageArrivee.numero_declaration;
+      const bureauArrivee = messageArrivee.bureauArrivee || messageArrivee.bureau_arrivee;
+      const dateArrivee = messageArrivee.dateArrivee || messageArrivee.date_arrivee;
+      const controleEffectue = messageArrivee.controleEffectue ?? messageArrivee.controle_effectue ?? true;
+      const visaAppose = messageArrivee.visaAppose ?? messageArrivee.visa_appose ?? true;
+      const conformiteItineraire = messageArrivee.conformiteItineraire ?? messageArrivee.conformite_itineraire ?? true;
+      const delaiRespecte = messageArrivee.delaiRespecte ?? messageArrivee.delai_respecte ?? true;
+      const declarationDetailDeposee = messageArrivee.declarationDetailDeposee ?? messageArrivee.declaration_detail_deposee ?? false;
+      const numeroDeclarationDetail = messageArrivee.numeroDeclarationDetail || messageArrivee.numero_declaration_detail;
+      
       // Validation
-      if (!messageArrivee.numeroDeclaration) {
+      if (!numeroDeclaration) {
         return res.status(400).json({
           status: 'ERROR',
-          message: 'Numéro déclaration requis',
+          message: 'Numéro déclaration requis (numeroDeclaration ou numero_declaration)',
+          champsRecus: Object.keys(messageArrivee),
           timestamp: new Date().toISOString()
         });
       }
@@ -36,31 +49,39 @@ module.exports = async (req, res) => {
       const transitId = Array.from(database.declarationsTransit.keys())
         .find(id => {
           const transit = database.declarationsTransit.get(id);
-          return transit.numeroDeclaration === messageArrivee.numeroDeclaration;
+          return transit.numeroDeclaration === numeroDeclaration;
         });
       
       if (!transitId) {
-        console.log(`⚠️ [SÉNÉGAL] Transit ${messageArrivee.numeroDeclaration} non trouvé`);
+        console.log(`⚠️ [SÉNÉGAL] Transit ${numeroDeclaration} non trouvé`);
         return res.status(404).json({
           status: 'NOT_FOUND',
-          message: `Transit ${messageArrivee.numeroDeclaration} non trouvé au Port de Dakar`,
+          message: `Transit ${numeroDeclaration} non trouvé au Port de Dakar`,
           timestamp: new Date().toISOString()
         });
       }
 
-      // ✅ ÉTAPE 14 : Enregistrer message arrivée
+      // ✅ ÉTAPE 14 : Enregistrer message arrivée avec données normalisées
       const transitMisAJour = database.recevoirMessageArrivee(transitId, {
-        ...messageArrivee,
+        numeroDeclaration: numeroDeclaration,
+        bureauArrivee: bureauArrivee,
+        dateArrivee: dateArrivee || new Date(),
+        controleEffectue: controleEffectue,
+        visaAppose: visaAppose,
+        conformiteItineraire: conformiteItineraire,
+        delaiRespecte: delaiRespecte,
+        declarationDetailDeposee: declarationDetailDeposee,
+        numeroDeclarationDetail: numeroDeclarationDetail,
         dateReception: new Date(),
         etapeTransit: 14
       });
 
       console.log(`✅ [SÉNÉGAL] ÉTAPE 14 TERMINÉE: Message arrivée enregistré pour transit ${transitId}`);
-      console.log(`📍 [SÉNÉGAL] Bureau arrivée: ${messageArrivee.bureauArrivee || 'N/A'}`);
-      console.log(`✓ [SÉNÉGAL] Contrôles effectués: ${messageArrivee.controleEffectue ? 'OUI' : 'NON'}`);
+      console.log(`📍 [SÉNÉGAL] Bureau arrivée: ${bureauArrivee || 'N/A'}`);
+      console.log(`✓ [SÉNÉGAL] Contrôles effectués: ${controleEffectue ? 'OUI' : 'NON'}`);
       console.log(`🎯 [SÉNÉGAL] Transit ${transitId} → Statut: ${transitMisAJour.statut}`);
 
-      // ✅ Réponse workflow Sénégal
+      // ✅ Réponse workflow Sénégal avec données normalisées
       res.status(200).json({
         status: 'SUCCESS',
         message: '✅ ÉTAPE 14 SÉNÉGAL TERMINÉE - Message arrivée accepté',
@@ -80,13 +101,13 @@ module.exports = async (req, res) => {
         },
         
         messageArrivee: {
-          numeroDeclaration: messageArrivee.numeroDeclaration,
-          bureauArrivee: messageArrivee.bureauArrivee,
-          dateArrivee: messageArrivee.dateArrivee,
-          controleEffectue: messageArrivee.controleEffectue,
-          visaAppose: messageArrivee.visaAppose,
-          conformiteItineraire: messageArrivee.conformiteItineraire,
-          delaiRespecte: messageArrivee.delaiRespecte,
+          numeroDeclaration: numeroDeclaration,
+          bureauArrivee: bureauArrivee,
+          dateArrivee: dateArrivee,
+          controleEffectue: controleEffectue,
+          visaAppose: visaAppose,
+          conformiteItineraire: conformiteItineraire,
+          delaiRespecte: delaiRespecte,
           dateReception: new Date().toISOString()
         },
         
