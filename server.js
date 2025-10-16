@@ -62,6 +62,12 @@ const apiRouter = {
   
   // ÉTAPE 14 : Réception message arrivée
   'POST /api/transit/arrivee': () => require('./api/transit/arrivee'),
+
+  // ✅ APIs Authentification
+  'POST /api/auth/login': () => require('./api/auth/login'),
+  'POST /api/auth/verify': () => require('./api/auth/verify'),
+  'GET /api/auth/verify': () => require('./api/auth/verify'),
+  'POST /api/auth/logout': () => require('./api/auth/logout'),
   
   // ✅ Tests Kit MuleSoft
   'GET /api/kit/test': () => require('./api/kit/test'),

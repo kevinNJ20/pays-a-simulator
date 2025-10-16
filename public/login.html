@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🇸🇳 Connexion - Système Douanier Sénégal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #00a651 0%, #ff0000 50%, #ffcc00 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .senegal-flag {
+            width: 100px;
+            height: 75px;
+            display: flex;
+            margin: 0 auto 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .flag-stripe {
+            flex: 1;
+            position: relative;
+        }
+
+        .flag-green {
+            background: #00a651;
+        }
+
+        .flag-yellow {
+            background: #ffcc00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flag-red {
+            background: #ff0000;
+        }
+
+        .flag-star {
+            color: #00a651;
+            font-size: 36px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .workflow-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .workflow-btn {
+            flex: 1;
+            padding: 15px;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .workflow-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .workflow-btn.active {
+            background: linear-gradient(135deg, #00a651 0%, #ff0000 100%);
+            color: white;
+            border-color: #00a651;
+            box-shadow: 0 4px 15px rgba(0, 166, 81, 0.3);
+        }
+
+        .workflow-btn .icon {
+            display: block;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00a651;
+            box-shadow: 0 0 0 3px rgba(0, 166, 81, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #00a651 0%, #ff0000 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 166, 81, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .workflow-btn .icon {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="senegal-flag">
+            <div class="flag-stripe flag-green"></div>
+            <div class="flag-stripe flag-yellow">
+                <div class="flag-star">★</div>
+            </div>
+            <div class="flag-stripe flag-red"></div>
+        </div>
+
+        <h1>🇸🇳 Système Douanier</h1>
+        <p class="subtitle">Port de Dakar - Connexion Sécurisée</p>
+
+        <div id="alert-container"></div>
+
+        <div class="workflow-selector">
+            <button class="workflow-btn active" onclick="selectWorkflow('libre-pratique')" id="btn-libre-pratique">
+                <span class="icon">📋</span>
+                <span>Libre Pratique</span>
+            </button>
+            <button class="workflow-btn" onclick="selectWorkflow('transit')" id="btn-transit">
+                <span class="icon">🚛</span>
+                <span>Transit</span>
+            </button>
+        </div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Identifiant</label>
+                <input type="text" id="username" name="username" placeholder="Votre identifiant" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" placeholder="Votre mot de passe" required>
+            </div>
+
+            <button type="submit" class="btn-login" id="btn-submit">
+                🔐 Se Connecter
+            </button>
+        </form>
+
+        <div class="info-box">
+            <h3>ℹ️ Comptes de Démonstration</h3>
+            <ul>
+                <li><strong>admin</strong> / admin123 (Tous workflows)</li>
+                <li><strong>douane</strong> / douane2025 (Tous workflows)</li>
+                <li><strong>lp_user</strong> / lp123 (Libre Pratique)</li>
+                <li><strong>transit_user</strong> / transit123 (Transit)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let selectedWorkflow = 'libre-pratique';
+
+        function selectWorkflow(workflow) {
+            selectedWorkflow = workflow;
+            
+            document.getElementById('btn-libre-pratique').classList.remove('active');
+            document.getElementById('btn-transit').classList.remove('active');
+            
+            document.getElementById(`btn-${workflow}`).classList.add('active');
+        }
+
+        function showAlert(message, type = 'error') {
+            const alertContainer = document.getElementById('alert-container');
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${type === 'error' ? '❌' : '✅'} ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const btnSubmit = document.getElementById('btn-submit');
+            
+            if (!username || !password) {
+                showAlert('Veuillez remplir tous les champs');
+                return;
+            }
+            
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<div class="loading"></div> Connexion...';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        workflow: selectedWorkflow
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Stocker le token
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('workflow', selectedWorkflow);
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('user_role', data.user.role);
+                    
+                    showAlert('Connexion réussie! Redirection...', 'success');
+                    
+                    // Redirection selon le workflow
+                    setTimeout(() => {
+                        window.location.href = selectedWorkflow === 'libre-pratique' 
+                            ? '/libre-pratique.html' 
+                            : '/transit.html';
+                    }, 1000);
+                } else {
+                    showAlert(data.message || 'Identifiants incorrects');
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '🔐 Se Connecter';
+                }
+            } catch (error) {
+                console.error('Erreur connexion:', error);
+                showAlert('Erreur de connexion au serveur');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '🔐 Se Connecter';
+            }
+        });
+
+        // Vérifier si déjà connecté
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('auth_token');
+            const workflow = localStorage.getItem('workflow');
+            
+            if (token && workflow) {
+                // Rediriger vers la page appropriée
+                window.location.href = workflow === 'libre-pratique' 
+                    ? '/libre-pratique.html' 
+                    : '/transit.html';
+            }
+        });
+    </script>
+</body>
+</html>

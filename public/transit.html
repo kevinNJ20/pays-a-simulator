@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🇸🇳 Sénégal - Transit - Port de Dakar - Système Douanier UEMOA</title>
+    
+    <!-- Script d'authentification -->
+    <script src="/auth.js"></script>
+    
+    <style>
+        /* Même CSS que libre-pratique.html */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #00a651 0%, #ff0000 50%, #ffcc00 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .header-logo {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 80px;
+            height: 80px;
+        }
+
+        .user-info-container {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .senegal-flag {
+            width: 80px;
+            height: 60px;
+            display: flex;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .flag-stripe {
+            flex: 1;
+            position: relative;
+        }
+
+        .flag-green {
+            background: #00a651;
+        }
+
+        .flag-yellow {
+            background: #ffcc00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flag-red {
+            background: #ff0000;
+        }
+
+        .flag-star {
+            color: #00a651;
+            font-size: 24px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .kit-status-banner {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .kit-status-banner.connected {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .kit-status-banner.disconnected {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            color: white;
+        }
+
+        .kit-status-banner.checking {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: white;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+
+        .status-indicator.connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.checking {
+            background: #ffc107;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .form-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+
+        .form-row input,
+        .form-row select,
+        .form-row textarea {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-row input:focus,
+        .form-row select:focus,
+        .form-row textarea:focus {
+            outline: none;
+            border-color: #4caf50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .marchandise-transit-section {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        .marchandise-transit-section h4 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+            color: white;
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-test {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            color: white;
+            font-size: 12px;
+            padding: 8px 16px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .transit-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .manifeste-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4caf50;
+            transition: all 0.3s;
+        }
+
+        .manifeste-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(5px);
+        }
+
+        .manifeste-item.transmitted {
+            border-left-color: #28a745;
+        }
+
+        .manifeste-header {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .manifeste-details {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .transmission-status {
+            margin-top: 5px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .transmission-status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .transmission-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .kit-interactions {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .interaction-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .interaction-item.error {
+            border-left-color: #dc3545;
+        }
+
+        .interaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .interaction-title {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .interaction-time {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header-logo {
+                position: static;
+                transform: none;
+                margin: 0 auto 20px;
+            }
+            
+            .user-info-container {
+                position: static;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-logo">
+                <div class="senegal-flag">
+                    <div class="flag-stripe flag-green"></div>
+                    <div class="flag-stripe flag-yellow">
+                        <div class="flag-star">★</div>
+                    </div>
+                    <div class="flag-stripe flag-red"></div>
+                </div>
+            </div>
+            
+            <!-- Conteneur pour les infos utilisateur -->
+            <div class="user-info-container" id="user-info-container"></div>
+            
+            <h1>🇸🇳 Système Douanier Sénégal - Transit</h1>
+            <p>Port de Dakar - Pays de Prime Abord - Interconnexion UEMOA</p>
+        </header>
+
+        <div class="kit-status-banner checking" id="kit-banner">
+            <div class="loading"></div> Vérification connexion Kit d'Interconnexion...
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>🏛️ Douanes Sénégal</h3>
+                <div class="connection-status">
+                    <div class="status-indicator connected"></div>
+                    <span>Port de Dakar Actif</span>
+                </div>
+                <small>Sénégal - Pays de prime abord</small>
+            </div>
+
+            <div class="status-card">
+                <h3>🔗 Kit d'Interconnexion</h3>
+                <div class="connection-status">
+                    <div class="status-indicator checking" id="kit-indicator"></div>
+                    <span id="kit-status-text">Vérification...</span>
+                </div>
+                <small id="kit-details">Test de connectivité en cours</small>
+            </div>
+
+            <div class="status-card">
+                <h3>📊 Statistiques</h3>
+                <div>Transits créés: <strong id="stat-transits">0</strong></div>
+                <div>Transmissions Kit: <strong id="stat-transmissions">0</strong></div>
+                <div>Succès: <strong id="stat-succes">0</strong></div>
+            </div>
+
+            <div class="status-card">
+                <h3>📈 Performance</h3>
+                <div>Taux de réussite: <strong id="taux-reussite">100%</strong></div>
+                <div>Latence moyenne: <strong id="latence-moyenne">-- ms</strong></div>
+            </div>
+        </div>
+
+        <main class="main">
+            <section class="card">
+                <h2>🚛 Créer une Déclaration Transit (Format UEMOA - Port de Dakar)</h2>
+                <form id="transit-form">
+                    <div class="form-section">
+                        <h3>📋 Informations Transit</h3>
+                        <div class="form-row">
+                            <input type="text" id="transit-numero" placeholder="Numéro déclaration transit" required>
+                            <input type="text" id="transit-transporteur" placeholder="Transporteur" required>
+                        </div>
+                        <div class="form-row">
+                            <select id="transit-mode" required>
+                                <option value="">Mode de transport</option>
+                                <option value="ROUTIER">🚛 ROUTIER</option>
+                                <option value="FERROVIAIRE">🚂 FERROVIAIRE</option>
+                                <option value="AERIEN">✈️ AÉRIEN</option>
+                                <option value="FLUVIAL">⛴️ FLUVIAL</option>
+                            </select>
+                            <select id="transit-destination" required>
+                                <option value="">Pays de destination</option>
+                                <option value="MALI">🇲🇱 MALI</option>
+                                <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
+                                <option value="NIGER">🇳🇪 NIGER</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <input type="text" id="transit-itineraire" placeholder="Itinéraire (ex: Dakar-Bamako via Kayes)" required>
+                            <input type="text" id="transit-delai" placeholder="Délai de route (ex: 72 heures)" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📦 Marchandises en Transit</h3>
+                        <div id="transit-marchandises-container">
+                            <div class="marchandise-transit-section" data-marchandise="0">
+                                <h4>Marchandise 1</h4>
+                                <div class="form-row">
+                                    <input type="text" name="designation" placeholder="Désignation marchandise" required>
+                                    <input type="number" name="poids" placeholder="Poids total (kg)" step="0.01" required>
+                                </div>
+                                <div class="form-row">
+                                    <input type="number" name="nombreColis" placeholder="Nombre de colis" required>
+                                    <input type="text" name="marques" placeholder="Marques et numéros">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="ajouterMarchandiseTransit()">➕ Ajouter Marchandise</button>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>💰 Garanties</h3>
+                        <div class="form-row">
+                            <input type="number" id="transit-caution" placeholder="Montant caution (FCFA)" step="0.01" value="0">
+                            <input type="text" id="transit-ref-caution" placeholder="Référence caution">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="btn-submit-transit">
+                        🚛 Créer Déclaration Transit (Étapes 1-6)
+                    </button>
+                </form>
+            </section>
+
+            <section class="card">
+                <h2>🚛 Déclarations Transit - Port de Dakar</h2>
+                <div class="transit-list" id="transits-list">
+                    <p>Chargement des transits...</p>
+                </div>
+                <button class="btn btn-test" onclick="chargerTransits()" style="width: 100%; margin-top: 15px;">
+                    🔄 Actualiser Transits
+                </button>
+            </section>
+
+            <section class="card full-width">
+                <h2>🔗 Interactions Kit d'Interconnexion - Workflow Temps Réel</h2>
+                <div class="kit-interactions" id="kit-interactions">
+                    <div class="interaction-item">
+                        <div class="interaction-header">
+                            <div class="interaction-title">🇸🇳 Système Transit Sénégal initialisé</div>
+                            <div class="interaction-time" id="init-time"></div>
+                        </div>
+                        <div>Port de Dakar - Monitoring des échanges Transit avec Kit d'Interconnexion activé - Format UEMOA</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="/script.js"></script>
+    <script>
+        // Vérifier l'authentification au chargement de la page
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('🔐 [TRANSIT] Vérification authentification...');
+            
+            const isAuth = await checkAuth('transit');
+            if (!isAuth) {
+                console.log('❌ [TRANSIT] Non authentifié - redirection vers login');
+                return; // Sera redirigé vers login par checkAuth
+            }
+            
+            console.log('✅ [TRANSIT] Authentification validée');
+            
+            // Afficher les informations utilisateur
+            displayUserInfo('user-info-container');
+        });
+    </script>
+</body>
+
+</html>
