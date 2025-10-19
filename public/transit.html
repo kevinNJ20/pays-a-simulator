@@ -6,11 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🇸🇳 Sénégal - Transit - Port de Dakar - Système d'Information Douanier</title>
     
-    <!-- Script d'authentification -->
     <script src="/auth.js"></script>
     
     <style>
-        /* Même CSS que libre-pratique.html */
         * {
             margin: 0;
             padding: 0;
@@ -224,6 +222,18 @@
 
         .form-row.single {
             grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            font-size: 0.9em;
         }
 
         .form-row input,
@@ -496,10 +506,9 @@
                 </div>
             </div>
             
-            <!-- Conteneur pour les infos utilisateur -->
             <div class="user-info-container" id="user-info-container"></div>
             
-            <h1>🇸🇳 Système d'Information Douanier Sénégal - Transit</h1>
+            <h1>🇸🇳 Système d'Information Douanier - Transit</h1>
             <p>Port de Dakar - Pays de Prime Abord - Interconnexion UEMOA</p>
         </header>
 
@@ -547,27 +556,45 @@
                     <div class="form-section">
                         <h3>📋 Informations Transit</h3>
                         <div class="form-row">
-                            <input type="text" id="transit-numero" placeholder="Numéro déclaration transit" required>
-                            <input type="text" id="transit-transporteur" placeholder="Transporteur" required>
+                            <div class="form-group">
+                                <label for="transit-numero">Numéro déclaration transit *</label>
+                                <input type="text" id="transit-numero" placeholder="Numéro déclaration transit" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="transit-transporteur">Transporteur *</label>
+                                <input type="text" id="transit-transporteur" placeholder="Transporteur" required>
+                            </div>
                         </div>
                         <div class="form-row">
-                            <select id="transit-mode" required>
-                                <option value="">Mode de transport</option>
-                                <option value="ROUTIER">🚛 ROUTIER</option>
-                                <option value="FERROVIAIRE">🚂 FERROVIAIRE</option>
-                                <option value="AERIEN">✈️ AÉRIEN</option>
-                                <option value="FLUVIAL">⛴️ FLUVIAL</option>
-                            </select>
-                            <select id="transit-destination" required>
-                                <option value="">Pays de destination</option>
-                                <option value="MALI">🇲🇱 MALI</option>
-                                <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
-                                <option value="NIGER">🇳🇪 NIGER</option>
-                            </select>
+                            <div class="form-group">
+                                <label for="transit-mode">Mode de transport *</label>
+                                <select id="transit-mode" required>
+                                    <option value="">Mode de transport</option>
+                                    <option value="ROUTIER">🚛 ROUTIER</option>
+                                    <option value="FERROVIAIRE">🚂 FERROVIAIRE</option>
+                                    <option value="AERIEN">✈️ AÉRIEN</option>
+                                    <option value="FLUVIAL">⛴️ FLUVIAL</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="transit-destination">Pays de destination *</label>
+                                <select id="transit-destination" required>
+                                    <option value="">Pays de destination</option>
+                                    <option value="MALI">🇲🇱 MALI</option>
+                                    <option value="BURKINA FASO">🇧🇫 BURKINA FASO</option>
+                                    <option value="NIGER">🇳🇪 NIGER</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-row">
-                            <input type="text" id="transit-itineraire" placeholder="Itinéraire (ex: Dakar-Bamako via Kayes)" required>
-                            <input type="text" id="transit-delai" placeholder="Délai de route (ex: 72 heures)" required>
+                            <div class="form-group">
+                                <label for="transit-itineraire">Itinéraire *</label>
+                                <input type="text" id="transit-itineraire" placeholder="Itinéraire (ex: Dakar-Bamako via Kayes)" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="transit-delai">Délai de route *</label>
+                                <input type="text" id="transit-delai" placeholder="Délai de route (ex: 72 heures)" required>
+                            </div>
                         </div>
                     </div>
 
@@ -577,12 +604,24 @@
                             <div class="marchandise-transit-section" data-marchandise="0">
                                 <h4>Marchandise 1</h4>
                                 <div class="form-row">
-                                    <input type="text" name="designation" placeholder="Désignation marchandise" required>
-                                    <input type="number" name="poids" placeholder="Poids total (kg)" step="0.01" required>
+                                    <div class="form-group">
+                                        <label>Désignation marchandise *</label>
+                                        <input type="text" name="designation" placeholder="Désignation marchandise" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Poids total (kg) *</label>
+                                        <input type="number" name="poids" placeholder="Poids total (kg)" step="0.01" required>
+                                    </div>
                                 </div>
                                 <div class="form-row">
-                                    <input type="number" name="nombreColis" placeholder="Nombre de colis" required>
-                                    <input type="text" name="marques" placeholder="Marques et numéros">
+                                    <div class="form-group">
+                                        <label>Nombre de colis *</label>
+                                        <input type="number" name="nombreColis" placeholder="Nombre de colis" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Marques et numéros</label>
+                                        <input type="text" name="marques" placeholder="Marques et numéros">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -592,8 +631,14 @@
                     <div class="form-section">
                         <h3>💰 Garanties</h3>
                         <div class="form-row">
-                            <input type="number" id="transit-caution" placeholder="Montant caution (FCFA)" step="0.01" value="0">
-                            <input type="text" id="transit-ref-caution" placeholder="Référence caution">
+                            <div class="form-group">
+                                <label for="transit-caution">Montant caution (FCFA)</label>
+                                <input type="number" id="transit-caution" placeholder="Montant caution (FCFA)" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="transit-ref-caution">Référence caution</label>
+                                <input type="text" id="transit-ref-caution" placeholder="Référence caution">
+                            </div>
                         </div>
                     </div>
 
@@ -636,19 +681,16 @@
 
     <script src="/script.js"></script>
     <script>
-        // Vérifier l'authentification au chargement de la page
         window.addEventListener('DOMContentLoaded', async () => {
             console.log('🔐 [TRANSIT] Vérification authentification...');
             
             const isAuth = await checkAuth('transit');
             if (!isAuth) {
                 console.log('❌ [TRANSIT] Non authentifié - redirection vers login');
-                return; // Sera redirigé vers login par checkAuth
+                return;
             }
             
             console.log('✅ [TRANSIT] Authentification validée');
-            
-            // Afficher les informations utilisateur
             displayUserInfo('user-info-container');
         });
     </script>
