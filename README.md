@@ -56,17 +56,17 @@ node --version  # Doit être v22.x ou supérieur
 
 ```bash
 npm start
-# Serveur démarré sur http://localhost:3001
+# Serveur démarré sur http://64.225.5.75:3001
 ```
 
 ### URLs principales
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| 🖥️ Dashboard | http://localhost:3001 | Interface web complète |
-| 🏥 Health | http://localhost:3001/api/health | État du système |
-| 📊 Stats | http://localhost:3001/api/statistiques | Métriques temps réel |
-| 📦 Manifestes | http://localhost:3001/api/manifeste/lister | Liste des manifestes |
+| 🖥️ Dashboard | http://64.225.5.75:3001 | Interface web complète |
+| 🏥 Health | http://64.225.5.75:3001/api/health | État du système |
+| 📊 Stats | http://64.225.5.75:3001/api/statistiques | Métriques temps réel |
+| 📦 Manifestes | http://64.225.5.75:3001/api/manifeste/lister | Liste des manifestes |
 
 ---
 
@@ -174,7 +174,7 @@ Le Sénégal gère les **étapes 1-6, 14-16**.
 ### Exemple : Créer un manifeste
 
 ```bash
-curl -X POST http://localhost:3001/api/manifeste/creer \
+curl -X POST http://64.225.5.75:3001/api/manifeste/creer \
   -H "Content-Type: application/json" \
   -H "X-Source-Country: SEN" \
   -d @manifeste.json
@@ -183,7 +183,7 @@ curl -X POST http://localhost:3001/api/manifeste/creer \
 ### Exemple : Lister les manifestes
 
 ```bash
-curl http://localhost:3001/api/manifeste/lister?limite=10&statut=DECLARATION_RECUE
+curl http://64.225.5.75:3001/api/manifeste/lister?limite=10&statut=DECLARATION_RECUE
 ```
 
 ---
@@ -297,7 +297,7 @@ PORT_NAME=Port de Dakar
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "curl http://localhost:3001/api/health"
+    "test": "curl http://64.225.5.75:3001/api/health"
   }
 }
 ```
@@ -310,19 +310,19 @@ PORT_NAME=Port de Dakar
 
 ```bash
 # 1. Créer un manifeste
-curl -X POST http://localhost:3001/api/manifeste/creer \
+curl -X POST http://64.225.5.75:3001/api/manifeste/creer \
   -H "Content-Type: application/json" \
   -d '{"numero_manif": 9999, ...}'
 
 # 2. Vérifier la transmission
-curl http://localhost:3001/api/manifeste/lister
+curl http://64.225.5.75:3001/api/manifeste/lister
 
 # 3. Simuler réception Mali (ÉTAPE 17)
-curl -X POST http://localhost:3001/api/mainlevee/autorisation \
+curl -X POST http://64.225.5.75:3001/api/mainlevee/autorisation \
   -d '{"autorisationMainlevee": {"numeroManifeste": "9999", ...}}'
 
 # 4. Apurer le manifeste (ÉTAPES 18-19)
-curl -X POST http://localhost:3001/api/apurement/traiter \
+curl -X POST http://64.225.5.75:3001/api/apurement/traiter \
   -d '{"numeroManifeste": "9999", "agentConfirmation": "TEST_AGENT"}'
 ```
 
