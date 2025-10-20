@@ -237,7 +237,7 @@ curl http://localhost:3001/api/manifeste/lister?limite=10&statut=DECLARATION_REC
 
 ```javascript
 {
-  baseURL: 'http://localhost:8080/api/v1',
+  baseURL: 'http://64.225.5.75:8086/api/v1',
   timeout: 90000,
   headers: {
     'X-Source-Country': 'SEN',
@@ -282,7 +282,7 @@ curl http://localhost:3001/api/manifeste/lister?limite=10&statut=DECLARATION_REC
 PORT=3001
 
 # Kit MuleSoft
-KIT_MULESOFT_URL=http://localhost:8080/api/v1
+KIT_MULESOFT_URL=http://64.225.5.75:8086/api/v1
 KIT_TIMEOUT=90000
 
 # Sénégal
@@ -403,7 +403,7 @@ Email : douanes.dakar@gouv.sn
 
 **Kit inaccessible ?**
 ```bash
-curl http://localhost:8080/api/v1/health
+curl http://64.225.5.75:8086/api/v1/health
 KIT_MULESOFT_URL="" npm start  # Mode local
 ```
 

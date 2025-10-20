@@ -294,7 +294,7 @@ server.listen(PORT, HOST, () => {
   console.log(`🌍 URL: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}`);
   console.log(`🔍 Health: http://localhost:${PORT}/api/health`);
-  console.log(`🔗 Kit MuleSoft: http://localhost:8080/api/v1`);
+  console.log(`🔗 Kit MuleSoft: http://64.225.5.75:8086/api/v1`);
   console.log(`⏹️  Arrêt: Ctrl+C`);
   console.log('🇸🇳 ═══════════════════════════════════════════════════════════');
   console.log('');
