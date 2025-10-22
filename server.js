@@ -1,32 +1,24 @@
 // ============================================================================
-// SERVEUR LOCAL SÉNÉGAL - server.js COMPLET AVEC HTTPS
+// SERVEUR LOCAL SÉNÉGAL - server.js CORRIGÉ
 // Port de Dakar - Pays de prime abord
 // Compatible avec les APIs écrites pour Vercel selon rapport PDF UEMOA
 // ============================================================================
 
 const http = require('http');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
 // ✅ Configuration du serveur - SÉNÉGAL (PAYS A selon rapport PDF)
-const HTTP_PORT = process.env.HTTP_PORT || 3001;
-const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
+const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
-const PAYS_CODE = 'SEN'; // Sénégal
+const PAYS_CODE = 'SEN'; // ✅ CORRECTION: Sénégal au lieu de CIV
 const PAYS_NOM = 'Sénégal';
-const PAYS_TYPE = 'COTIER'; // Pays côtier selon rapport PDF
-const PAYS_ROLE = 'PAYS_PRIME_ABORD'; // Rôle selon rapport PDF
-const PORT_NAME = 'Port de Dakar'; // Port principal Sénégal
-
-// Vérifier si les certificats SSL existent
-const USE_HTTPS = process.env.USE_HTTPS === 'true' || fs.existsSync(path.join(__dirname, 'ssl-certs', 'cert.pem'));
+const PAYS_TYPE = 'COTIER'; // ✅ Pays côtier selon rapport PDF
+const PAYS_ROLE = 'PAYS_PRIME_ABORD'; // ✅ Rôle selon rapport PDF
+const PORT_NAME = 'Port de Dakar'; // ✅ Port principal Sénégal
 
 console.log(`🇸🇳 Démarrage serveur ${PAYS_NOM} (${PAYS_TYPE}) - ${PAYS_ROLE}...`);
-if (USE_HTTPS) {
-  console.log('🔐 Mode HTTPS activé');
-}
 
 // Types MIME
 const mimeTypes = {
@@ -59,7 +51,11 @@ const apiRouter = {
   'GET /api/apurement/traiter': () => require('./api/apurement/traiter'),
   'POST /api/apurement/traiter': () => require('./api/apurement/traiter'),
   
-  // ✅ WORKFLOW TRANSIT
+  // ✅ Tests Kit MuleSoft
+  'GET /api/kit/test': () => require('./api/kit/test'),
+  'POST /api/kit/test': () => require('./api/kit/test'),
+
+  //✅ WORKFLOW TRANSIT
   // ÉTAPES 1-6 : Création déclaration transit
   'POST /api/transit/creer': () => require('./api/transit/creer'),
   'GET /api/transit/lister': () => require('./api/transit/lister'),
@@ -130,8 +126,8 @@ function createVercelRequest(req, body, query) {
   };
 }
 
-// ✅ Fonction de gestion des requêtes (utilisée par HTTP et HTTPS)
-const requestHandler = async (req, res) => {
+// ✅ Serveur HTTP Sénégal
+const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const method = req.method;
@@ -288,149 +284,71 @@ const requestHandler = async (req, res) => {
       port: PORT_NAME
     }));
   }
-};
-
-// ✅ Créer le serveur HTTP (redirige vers HTTPS si activé)
-const httpServer = http.createServer((req, res) => {
-  if (USE_HTTPS) {
-    // Redirection automatique vers HTTPS
-    const host = req.headers.host ? req.headers.host.split(':')[0] : 'localhost';
-    const redirectUrl = `https://${host}:${HTTPS_PORT}${req.url}`;
-    
-    console.log(`🔀 Redirection HTTP → HTTPS: ${req.url}`);
-    res.writeHead(301, { 'Location': redirectUrl });
-    res.end();
-  } else {
-    // Mode HTTP normal
-    requestHandler(req, res);
-  }
 });
 
-// ✅ Créer le serveur HTTPS si certificats disponibles
-let httpsServer = null;
-if (USE_HTTPS) {
-  try {
-    const sslOptions = {
-      key: fs.readFileSync(path.join(__dirname, 'ssl-certs', 'key.pem')),
-      cert: fs.readFileSync(path.join(__dirname, 'ssl-certs', 'cert.pem'))
-    };
-    
-    httpsServer = https.createServer(sslOptions, requestHandler);
-    console.log('🔐 Certificats SSL chargés avec succès');
-  } catch (error) {
-    console.error('❌ Erreur chargement certificats SSL:', error.message);
-    console.log('⚠️ Le serveur fonctionnera en HTTP uniquement');
-    console.log('💡 Pour activer HTTPS, exécutez: ./generate-ssl.sh');
-  }
-}
-
-// ✅ Démarrer le serveur HTTP
-httpServer.listen(HTTP_PORT, HOST, () => {
+// ✅ Démarrer le serveur Sénégal
+server.listen(PORT, HOST, () => {
   console.log('');
   console.log('🇸🇳 ═══════════════════════════════════════════════════════════');
   console.log(`🇸🇳 Serveur ${PAYS_NOM} (${PAYS_ROLE}) démarré`);
-  console.log(`🌍 HTTP: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${HTTP_PORT}`);
-  
-  if (USE_HTTPS) {
-    console.log(`   → Redirige automatiquement vers HTTPS`);
-  } else {
-    console.log(`📊 Dashboard: http://64.225.5.75:${HTTP_PORT}`);
-    console.log(`📊 Dashboard local: http://localhost:${HTTP_PORT}`);
-  }
-  
+  console.log(`🌍 URL: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+  console.log(`📊 Dashboard: http://localhost:${PORT}`);
+  console.log(`🔍 Health: http://localhost:${PORT}/api/health`);
+  console.log(`🔗 Kit MuleSoft: http://64.225.5.75:8086/api/v1`);
+  console.log(`⏹️  Arrêt: Ctrl+C`);
   console.log('🇸🇳 ═══════════════════════════════════════════════════════════');
+  console.log('');
+  console.log(`🇸🇳 Simulateur ${PAYS_NOM} - Système Douanier ${PAYS_ROLE}`);
+  console.log('📋 Fonctionnalités disponibles conformes au rapport PDF UEMOA:');
+  console.log('');
+  console.log('   🔥 WORKFLOW LIBRE PRATIQUE (21 étapes):');
+  console.log('   • ÉTAPES 1-3: Création et enregistrement manifeste');
+  console.log('   • ÉTAPES 4-5: Transmission extraction vers Kit MuleSoft');
+  console.log('   • ÉTAPE 17: Réception informations déclaration/recouvrement');
+  console.log('   • ÉTAPE 18: Apurement du manifeste');
+  console.log('   • ÉTAPE 19: Attribution main levée (bon à enlever)');
+  console.log('');
+  console.log('   🚛 WORKFLOW TRANSIT (16 étapes):');
+  console.log('   • ÉTAPES 1-6: Création déclaration transit au départ');
+  console.log('   • ÉTAPE 14: Réception message arrivée destination');
+  console.log('   • ÉTAPES 15-16: Apurement transit');
+  console.log('');
+  console.log('   🔧 OUTILS TECHNIQUES:');
+  console.log('   • Interface web interactive avec monitoring temps réel');
+  console.log('   • Tests de connectivité Kit d\'Interconnexion MuleSoft');
+  console.log('   • Format UEMOA natif pour manifestes et déclarations');
+  console.log('');
+  console.log(`   📍 LOCALISATION: ${PORT_NAME} | Code: ${PAYS_CODE} | Type: ${PAYS_TYPE}`);
+  console.log('   🎯 DESTINATIONS: Mali, Burkina Faso, Niger, Côte d\'Ivoire, etc.');
+  console.log('');
+  console.log('   📋 ÉTAPES PAYS A SIMULÉES:');
+  console.log('   ✅ Création manifeste → Transmission Kit → Réception déclaration → Apurement/Levée');
+  console.log('   ⏳ PROCHAINES CORRECTIONS: Pays B (Mali), Kit MuleSoft, Commission UEMOA');
   console.log('');
 });
 
-// ✅ Démarrer le serveur HTTPS si disponible
-if (httpsServer) {
-  httpsServer.listen(HTTPS_PORT, HOST, () => {
-    console.log('🔐 ═══════════════════════════════════════════════════════════');
-    console.log(`🔐 Serveur HTTPS ${PAYS_NOM} prêt sur le port ${HTTPS_PORT}`);
-    console.log(`🌍 HTTPS: https://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${HTTPS_PORT}`);
-    console.log(`📊 Dashboard: https://64.225.5.75:${HTTPS_PORT}`);
-    console.log(`📊 Dashboard local: https://localhost:${HTTPS_PORT}`);
-    console.log(`🔍 Health: https://localhost:${HTTPS_PORT}/api/health`);
-    console.log(`🔗 Kit MuleSoft: http://64.225.5.75:8086/api/v1`);
-    console.log('🔐 ═══════════════════════════════════════════════════════════');
-    console.log('');
-    console.log('⚠️  IMPORTANT - Certificat Auto-Signé:');
-    console.log('   • Le navigateur affichera un avertissement de sécurité');
-    console.log('   • Chrome/Edge: Cliquez "Avancé" puis "Continuer vers le site"');
-    console.log('   • Firefox: Cliquez "Accepter le risque et continuer"');
-    console.log('');
-    console.log('💡 Pour un certificat valide sans avertissement:');
-    console.log('   • Obtenez un nom de domaine gratuit (DuckDNS, No-IP)');
-    console.log('   • Utilisez Let\'s Encrypt avec Certbot');
-    console.log('   • Consultez HTTPS_GUIDE.md pour les instructions');
-    console.log('');
-    console.log('⏹️  Arrêt: Ctrl+C');
-    console.log('');
-  });
-}
-
-// Afficher les informations du système
-console.log(`🇸🇳 Simulateur ${PAYS_NOM} - Système Douanier ${PAYS_ROLE}`);
-console.log('📋 Fonctionnalités disponibles conformes au rapport PDF UEMOA:');
-console.log('');
-console.log('   🔥 WORKFLOW LIBRE PRATIQUE (21 étapes):');
-console.log('   • ÉTAPES 1-3: Création et enregistrement manifeste');
-console.log('   • ÉTAPES 4-5: Transmission extraction vers Kit MuleSoft');
-console.log('   • ÉTAPE 17: Réception informations déclaration/recouvrement');
-console.log('   • ÉTAPE 18: Apurement du manifeste');
-console.log('   • ÉTAPE 19: Attribution main levée (bon à enlever)');
-console.log('');
-console.log('   🚛 WORKFLOW TRANSIT (16 étapes):');
-console.log('   • ÉTAPES 1-6: Création déclaration transit au départ');
-console.log('   • ÉTAPE 14: Réception message arrivée destination');
-console.log('   • ÉTAPES 15-16: Apurement transit');
-console.log('');
-console.log('   🔧 OUTILS TECHNIQUES:');
-console.log('   • Interface web interactive avec monitoring temps réel');
-console.log('   • Tests de connectivité Kit d\'Interconnexion MuleSoft');
-console.log('   • Format UEMOA natif pour manifestes et déclarations');
-if (USE_HTTPS) {
-  console.log('   • 🔐 HTTPS activé avec certificat SSL');
-}
-console.log('');
-console.log(`   📍 LOCALISATION: ${PORT_NAME} | Code: ${PAYS_CODE} | Type: ${PAYS_TYPE}`);
-console.log('   🎯 DESTINATIONS: Mali, Burkina Faso, Niger, Côte d\'Ivoire, etc.');
-console.log('');
-
 // ✅ Gestion propre de l'arrêt
-const shutdown = () => {
+process.on('SIGINT', () => {
   console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM} (${PORT_NAME})...`);
-  
-  httpServer.close(() => {
-    console.log(`✅ Serveur HTTP ${PAYS_NOM} arrêté`);
-    
-    if (httpsServer) {
-      httpsServer.close(() => {
-        console.log(`✅ Serveur HTTPS ${PAYS_NOM} arrêté`);
-        process.exit(0);
-      });
-    } else {
-      process.exit(0);
-    }
+  server.close(() => {
+    console.log(`✅ Serveur ${PAYS_NOM} arrêté proprement`);
+    process.exit(0);
   });
-  
-  // Force l'arrêt après 10 secondes
-  setTimeout(() => {
-    console.error('⚠️ Arrêt forcé après timeout');
-    process.exit(1);
-  }, 10000);
-};
+});
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+process.on('SIGTERM', () => {
+  console.log(`\n🛑 Arrêt du serveur ${PAYS_NOM} (${PORT_NAME})...`);
+  server.close(() => {
+    console.log(`✅ Serveur ${PAYS_NOM} arrêté proprement`);
+    process.exit(0);
+  });
+});
 
 // ✅ Gestion des erreurs non capturées
 process.on('uncaughtException', (error) => {
   console.error(`❌ [${PAYS_CODE}] Erreur non capturée:`, error);
-  console.error('Stack trace:', error.stack);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error(`❌ [${PAYS_CODE}] Promesse rejetée non gérée:`, reason);
-  console.error('Promise:', promise);
 });
