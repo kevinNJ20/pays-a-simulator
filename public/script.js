@@ -1410,6 +1410,216 @@ function afficherNotification(message, type) {
     }
 }
 
+// ============================================================================
+// FONCTIONS APUREMENT TRANSIT (ÉTAPES 15-16) - MANUEL
+// ============================================================================
+
+// Charger et afficher les transits prêts pour apurement
+function afficherTransitsAApurer(transits) {
+    const container = document.getElementById('transits-a-apurer-list');
+    const badge = document.getElementById('count-transits-a-apurer');
+    
+    if (!container) return;
+    
+    // Filtrer transits prêts pour apurement (arrivée confirmée mais pas encore apurés)
+    const transitsApurables = transits.filter(t => 
+        t.statut === 'ARRIVEE_CONFIRMEE' && 
+        t.messageArrivee && 
+        t.messageArrivee.recu &&
+        !t.apurement
+    );
+    
+    // Mettre à jour le badge
+    if (badge) {
+        if (transitsApurables.length > 0) {
+            badge.textContent = transitsApurables.length;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+    
+    if (transitsApurables.length > 0) {
+        container.innerHTML = transitsApurables.map(transit => {
+            const numeroDeclaration = getValue(transit, 'numeroDeclaration', 'N/A');
+            const transporteur = getValue(transit, 'transporteur', 'N/A');
+            const paysDestination = getValue(transit, 'paysDestination', 'N/A');
+            const bureauArrivee = getValue(transit, 'messageArrivee.bureauArrivee', 'N/A');
+            const dateArrivee = getValue(transit, 'messageArrivee.dateArrivee', null);
+            const cautionRequise = getValue(transit, 'cautionRequise', 0);
+            
+            return `
+                <div class="manifeste-item ready-for-apurement">
+                    <div class="manifeste-header">
+                        <span>🚛 ${numeroDeclaration} - ${transporteur}</span>
+                        <span class="transmission-status ready-apurement">🔓 PRÊT APUREMENT</span>
+                    </div>
+                    <div class="manifeste-details">
+                        🎯 Destination: ${paysDestination}<br>
+                        📍 Bureau arrivée: ${bureauArrivee}<br>
+                        📅 Arrivé le: ${dateArrivee ? new Date(dateArrivee).toLocaleString('fr-FR') : 'N/A'}<br>
+                        💰 Caution: ${cautionRequise.toLocaleString()} FCFA
+                    </div>
+                    <div class="manifeste-actions">
+                        <button class="btn btn-apurement" onclick="ouvrirApurementTransit('${numeroDeclaration}')">
+                            🔓 Traiter Apurement (Étapes 15-16)
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <p>Aucun transit en attente d'apurement</p>
+                <small>Les transits apparaîtront ici après réception du message d'arrivée depuis le Mali (ÉTAPE 14)</small>
+            </div>
+        `;
+    }
+}
+
+// Confirmer l'apurement transit
+async function confirmerApurementTransit() {
+    const btnConfirmer = document.getElementById('btn-confirmer-apurement-transit');
+    const originalText = btnConfirmer.innerHTML;
+
+    try {
+        const agentApurement = document.getElementById('agent-apurement-transit').value.trim();
+        if (!agentApurement) {
+            throw new Error('Veuillez saisir le nom de l\'agent d\'apurement');
+        }
+
+        btnConfirmer.disabled = true;
+        btnConfirmer.innerHTML = '<div class="loading"></div> Étapes 15-16 en cours...';
+
+        const apurementPayload = {
+            numeroDeclaration: window.apurementTransitData.numeroDeclaration,
+            agentApurement: agentApurement,
+            observations: document.getElementById('observations-transit').value.trim()
+        };
+
+        console.log('📤 [SÉNÉGAL] Envoi apurement transit:', apurementPayload);
+
+        const response = await fetch(`${API_BASE}/transit/apurer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Source-System': 'SENEGAL_FRONTEND',
+                'X-Source-Country': 'SEN'
+            },
+            body: JSON.stringify(apurementPayload)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ [SÉNÉGAL] Apurement transit confirmé:', result);
+
+        if (result.status === 'SUCCESS') {
+            document.getElementById('apurement-transit-info').style.display = 'none';
+            document.getElementById('apurement-transit-success').style.display = 'block';
+
+            document.getElementById('success-transit-numero').textContent = result.apurement.numeroDeclaration;
+            document.getElementById('success-transit-ref').textContent = result.apurement.id;
+            document.getElementById('success-transit-agent').textContent = agentApurement;
+            document.getElementById('success-transit-date').textContent = new Date(result.apurement.dateApurement).toLocaleString('fr-FR');
+            document.getElementById('success-transit-caution-lib').textContent = (result.transit.cautionRequise || 0).toLocaleString();
+
+            afficherNotification('✅ Workflow Transit terminé - Étapes 15-16 complétées!', 'success');
+            ajouterInteraction('✅ ÉTAPES 15-16', `Apurement et libération garanties confirmés - Transit ${result.apurement.numeroDeclaration}`);
+
+            setTimeout(() => {
+                chargerTransits();
+                chargerStatistiques();
+            }, 2000);
+
+        } else {
+            throw new Error(result.message || 'Erreur lors de l\'apurement transit');
+        }
+
+    } catch (error) {
+        console.error('❌ [SÉNÉGAL] Erreur confirmation apurement transit:', error);
+        afficherNotification('❌ Erreur: ' + error.message, 'error');
+        ajouterInteraction('❌ Apurement Transit', `Erreur: ${error.message}`);
+    } finally {
+        btnConfirmer.disabled = false;
+        btnConfirmer.innerHTML = originalText;
+    }
+}
+
+// Fermer l'interface d'apurement transit
+function fermerApurementTransit() {
+    document.getElementById('apurement-transit-section').style.display = 'none';
+    window.apurementTransitData = null;
+}
+
+// Modifier la fonction chargerTransits existante pour inclure l'affichage des transits à apurer
+const chargerTransitsOriginal = chargerTransits;
+chargerTransits = async function() {
+    try {
+        const response = await fetch(`${API_BASE}/transit/lister?limite=20`, {
+            signal: AbortSignal.timeout(10000)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'SUCCESS' && Array.isArray(data.transits)) {
+            // ✅ NOUVEAU: Afficher transits à apurer en priorité
+            afficherTransitsAApurer(data.transits);
+            
+            // Afficher la liste complète
+            const container = document.getElementById('transits-list');
+            if (!container) return;
+            
+            if (data.transits.length > 0) {
+                container.innerHTML = data.transits.map(transit => `
+                    <div class="manifeste-item transmitted">
+                        <div class="manifeste-header">
+                            <span>🚛 ${transit.numeroDeclaration} - ${transit.transporteur}</span>
+                            <span class="transmission-status ${
+                                transit.apurement ? 'success' : 
+                                transit.statut === 'ARRIVEE_CONFIRMEE' ? 'ready-apurement' : 
+                                'pending'
+                            }">
+                                ${transit.apurement ? '✅ Apuré' :
+                                  transit.statut === 'ARRIVEE_CONFIRMEE' ? '🔓 PRÊT APUREMENT' : 
+                                  transit.statut === 'ARRIVEE_CONFIRMEE' ? '✅ Arrivée confirmée' : '⏳ En transit'}
+                            </span>
+                        </div>
+                        <div class="manifeste-details">
+                            🎯 Destination: ${transit.paysDestination}<br>
+                            🚚 Mode: ${transit.modeTransport}<br>
+                            📍 Itinéraire: ${transit.itineraire}<br>
+                            ⏱️ Délai: ${transit.delaiRoute}<br>
+                            📦 Marchandises: ${transit.marchandises.nombre} (${transit.marchandises.poidsTotal.toLocaleString()} kg)<br>
+                            📅 Créé le: ${new Date(transit.dateCreation).toLocaleString('fr-FR')}
+                            ${transit.apurement ? `<br>🔓 Apuré le: ${new Date(transit.apurement.dateApurement).toLocaleString('fr-FR')}` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>Aucune déclaration transit</p>
+                    </div>
+                `;
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ [SÉNÉGAL] Erreur chargement transits:', error);
+    }
+};
+
 // ✅ VÉRIFICATION URL APUREMENT
 document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1441,5 +1651,82 @@ window.addEventListener('beforeunload', () => {
         console.warn('[SÉNÉGAL] Erreur cleanup:', error);
     }
 });
+
+// Ouvrir l'interface d'apurement transit
+window.ouvrirApurementTransit = async function(numeroDeclaration) {
+    console.log('🔓 [SÉNÉGAL] Ouverture interface apurement transit:', numeroDeclaration);
+
+    document.getElementById('apurement-transit-section').style.display = 'block';
+    document.getElementById('apurement-transit-info').style.display = 'none';
+    document.getElementById('apurement-transit-loading').style.display = 'block';
+    document.getElementById('apurement-transit-error').style.display = 'none';
+    document.getElementById('apurement-transit-success').style.display = 'none';
+
+    window.apurementTransitData = { numeroDeclaration };
+    document.getElementById('apurement-transit-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    try {
+        const response = await fetch(`${API_BASE}/transit/lister?limite=100`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Source-System': 'SENEGAL_FRONTEND',
+                'X-Source-Country': 'SEN'
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 'SUCCESS' && Array.isArray(result.transits)) {
+            // Trouver le transit spécifique
+            const transit = result.transits.find(t => t.numeroDeclaration === numeroDeclaration);
+            
+            if (!transit) {
+                throw new Error('Transit non trouvé');
+            }
+            
+            if (transit.apurement) {
+                throw new Error('Ce transit a déjà été apuré le ' + new Date(transit.apurement.dateApurement).toLocaleString('fr-FR'));
+            }
+            
+            if (transit.statut !== 'ARRIVEE_CONFIRMEE') {
+                throw new Error('Ce transit ne peut pas être apuré. Statut: ' + transit.statut);
+            }
+
+            // Remplir les informations
+            document.getElementById('apu-transit-numero').textContent = transit.numeroDeclaration;
+            document.getElementById('apu-transit-transporteur').textContent = transit.transporteur;
+            document.getElementById('apu-transit-destination').textContent = transit.paysDestination;
+            document.getElementById('apu-transit-bureau').textContent = transit.messageArrivee?.bureauArrivee || 'N/A';
+            document.getElementById('apu-transit-caution').textContent = (transit.cautionRequise || 0).toLocaleString();
+            document.getElementById('apu-transit-date-arrivee').textContent = transit.messageArrivee?.dateArrivee ? 
+                new Date(transit.messageArrivee.dateArrivee).toLocaleString('fr-FR') : 'N/A';
+            document.getElementById('apu-transit-controle').textContent = transit.messageArrivee?.controleEffectue ? 'Oui' : 'Non';
+
+            document.getElementById('agent-apurement-transit').value = '';
+            document.getElementById('observations-transit').value = '';
+
+            document.getElementById('apurement-transit-loading').style.display = 'none';
+            document.getElementById('apurement-transit-info').style.display = 'block';
+
+            ajouterInteraction('🔓 Apurement Transit', `Interface ouverte pour transit ${numeroDeclaration}`);
+
+        } else {
+            throw new Error('Données transit invalides');
+        }
+
+    } catch (error) {
+        console.error('❌ [SÉNÉGAL] Erreur chargement apurement transit:', error);
+        document.getElementById('apurement-transit-loading').style.display = 'none';
+        document.getElementById('apurement-transit-error').style.display = 'block';
+        document.getElementById('apurement-transit-error-message').textContent = error.message;
+        ajouterInteraction('❌ Apurement Transit', `Erreur: ${error.message}`);
+    }
+};
 
 console.log('🇸🇳 ✅ Script Système Douanier Sénégal - Port de Dakar initialisé');

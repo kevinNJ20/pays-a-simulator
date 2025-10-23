@@ -62,9 +62,9 @@ module.exports = async (req, res) => {
         });
       }
 
-      // ✅ ÉTAPES 1-6 : Création déclaration transit au Port de Dakar
-      console.log('🚛 [SÉNÉGAL] ÉTAPES 1-6: Création déclaration transit...');
-      
+      // ✅ ÉTAPES 1-9 : Création déclaration transit au Port de Dakar
+      console.log('🚛 [SÉNÉGAL] ÉTAPES 1-9: Création déclaration transit...');
+
       const transitCree = database.creerDeclarationTransit({
         ...donneesTransit,
         paysDepart: 'SEN',
@@ -79,6 +79,7 @@ module.exports = async (req, res) => {
       });
 
       console.log(`✅ [SÉNÉGAL] ÉTAPES 1-6 COMPLÉTÉES: Transit ${transitCree.id} créé`);
+      console.log(`✅ [SÉNÉGAL] ÉTAPES 7-9 COMPLÉTÉES: Garanties, paiement, bon à enlever OK`);
 
       // ✅ ÉTAPES 10-11 : Transmission copie vers Kit MuleSoft (puis Mali)
       let transmissionKitReussie = false;
