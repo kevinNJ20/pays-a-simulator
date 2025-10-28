@@ -67,6 +67,9 @@ const apiRouter = {
   // ÉTAPES 1-6 : Création déclaration transit
   'POST /api/transit/creer': () => require('./api/transit/creer'),
   'GET /api/transit/lister': () => require('./api/transit/lister'),
+
+  // ÉTAPES 15 : Apurement et main levée
+  'POST /api/transit/apurer': () => require('./api/transit/apurer'),
   
   // ÉTAPE 14 : Réception message arrivée
   'POST /api/transit/arrivee': () => require('./api/transit/arrivee'),
