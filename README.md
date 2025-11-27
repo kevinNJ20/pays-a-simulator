@@ -7,13 +7,79 @@
 
 ## 📋 Table des Matières
 
+- [Démarrage rapide](#-démarrage-rapide)
 - [Vue d'ensemble](#-vue-densemble)
 - [Architecture](#-architecture)
 - [Workflows](#-workflows)
 - [Services & APIs](#-services--apis)
 - [Structures de Données](#-structures-de-données)
-- [Installation](#-installation)
+- [Installation](#-installation-et-démarrage)
+- [Exécution en HTTP](#-exécution-en-http)
+- [Exécution en HTTPS](#-exécution-en-https)
+- [Tests et Vérification](#-tests-et-vérification)
 - [Utilisation](#-utilisation)
+- [Dépannage](#-dépannage)
+
+---
+
+## ⚡ Démarrage rapide
+
+### Pour démarrer en 3 minutes
+
+```bash
+# 1. Cloner et installer
+git clone <repository-url>
+cd pays-a-simulator
+npm install
+
+# 2. Lancer en HTTP (le plus simple)
+npm start
+
+# 3. Accéder à l'interface
+# Ouvrir http://localhost:3001 dans un navigateur
+# Se connecter : douane / douane2025
+```
+
+### Pour activer HTTPS
+
+```bash
+# 1. Générer les certificats SSL (script automatique)
+./generate-ssl.sh
+
+# OU génération manuelle
+cd ssl-certs
+openssl genrsa -out key.pem 4096
+openssl req -new -x509 -key key.pem -out cert.pem -days 365 -config openssl.cnf
+cd ..
+
+# 2. Relancer l'application
+npm start
+
+# 3. Accéder en HTTPS
+# Ouvrir https://localhost:3443 (accepter l'avertissement de sécurité)
+```
+
+### Sur serveur Digital Ocean
+
+```bash
+# Connexion SSH
+ssh root@64.225.5.75
+
+# Cloner et installer
+git clone <repository-url>
+cd pays-a-simulator
+npm install
+
+# Lancer en HTTP
+npm start
+# Accès : http://64.225.5.75:3001
+
+# OU lancer en HTTPS (après génération certificats)
+npm start
+# Accès : https://64.225.5.75:3443
+```
+
+**📖 Pour plus de détails** : Consultez les sections [Installation](#-installation-et-démarrage), [HTTP](#-exécution-en-http) et [HTTPS](#-exécution-en-https).
 
 ---
 
@@ -444,34 +510,369 @@ class PaysADatabase {
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation et Démarrage
 
 ### Prérequis
 
-- Node.js 22.x
-- npm ou yarn
-- Port 3001 disponible
+- **Node.js 22.x** (vérifier avec `node --version`)
+- **npm** ou **yarn** (vérifier avec `npm --version`)
+- **Ports disponibles** : 3001 (HTTP) et 3443 (HTTPS)
+- **OpenSSL** (pour générer les certificats SSL - généralement pré-installé sur Linux/Mac)
 
-### Installation rapide
+### 📥 Installation depuis le dépôt
+
+#### Sur un serveur Digital Ocean (ou autre instance Linux)
 
 ```bash
+# 1. Se connecter au serveur
+ssh root@64.225.5.75
+
+# 2. Cloner le projet
 git clone <repository-url>
-cd simulateur-senegal
+cd pays-a-simulator
+
+# 3. Installer les dépendances
 npm install
-npm start
+
+# 4. Lancer l'application (voir options ci-dessous)
 ```
 
-Le serveur démarre sur `http://localhost:3001`
-
-### Configuration environnement
+#### En local (développement)
 
 ```bash
-# .env (optionnel)
-PORT=3001
+# 1. Cloner le projet
+git clone <repository-url>
+cd pays-a-simulator
+
+# 2. Installer les dépendances
+npm install
+```
+
+### 🔧 Configuration Environnement
+
+Créer un fichier `.env` à la racine du projet (optionnel) :
+
+```bash
+# Ports
+HTTP_PORT=3001
+HTTPS_PORT=3443
+
+# Configuration HTTPS
+USE_HTTPS=true                    # Activer HTTPS si certificats présents
+REDIRECT_TO_HTTPS=false           # Rediriger HTTP → HTTPS (true/false)
+
+# Kit MuleSoft
 KIT_MULESOFT_URL=http://64.225.5.75:8086/api/v1
+
+# Pays
 PAYS_CODE=SEN
 PAYS_ROLE=PAYS_PRIME_ABORD
 ```
+
+**Note** : Si le fichier `.env` n'existe pas, l'application utilise les valeurs par défaut.
+
+---
+
+## 🌐 Exécution en HTTP
+
+### Mode HTTP simple (développement local)
+
+```bash
+# Lancer en HTTP uniquement
+npm start
+# ou
+npm run dev
+```
+
+**Résultat** :
+- ✅ Serveur HTTP démarré sur `http://localhost:3001`
+- ✅ Accessible depuis : `http://64.225.5.75:3001` (si sur serveur)
+- ✅ Dashboard : `http://localhost:3001` ou `http://64.225.5.75:3001`
+
+### Vérification
+
+```bash
+# Test de santé
+curl http://localhost:3001/api/health
+
+# Test depuis le serveur
+curl http://64.225.5.75:3001/api/health
+```
+
+---
+
+## 🔐 Exécution en HTTPS
+
+### Étape 1 : Générer les certificats SSL
+
+L'application nécessite des certificats SSL dans le dossier `ssl-certs/`. Deux options :
+
+#### Option A : Certificats auto-signés (développement/test)
+
+**Méthode 1 : Script automatique (recommandé)**
+
+```bash
+# Depuis la racine du projet
+./generate-ssl.sh
+```
+
+**Méthode 2 : Génération manuelle**
+
+```bash
+# Depuis la racine du projet
+cd ssl-certs
+
+# Générer la clé privée
+openssl genrsa -out key.pem 4096
+
+# Générer le certificat auto-signé (valide 365 jours)
+openssl req -new -x509 -key key.pem -out cert.pem -days 365 -config openssl.cnf
+
+# Vérifier que les fichiers sont créés
+ls -la key.pem cert.pem
+```
+
+**Note Windows** : Utiliser Git Bash ou WSL pour exécuter le script. Sinon, utiliser la méthode manuelle avec OpenSSL pour Windows.
+
+**⚠️ Important** : Les certificats auto-signés génèrent un avertissement de sécurité dans le navigateur. Acceptez-le pour continuer.
+
+#### Option B : Certificats Let's Encrypt (production)
+
+Pour un certificat valide sans avertissement :
+
+```bash
+# Installer Certbot
+sudo apt-get update
+sudo apt-get install certbot
+
+# Obtenir un certificat (nécessite un nom de domaine)
+sudo certbot certonly --standalone -d votre-domaine.com
+
+# Copier les certificats dans ssl-certs/
+sudo cp /etc/letsencrypt/live/votre-domaine.com/privkey.pem ssl-certs/key.pem
+sudo cp /etc/letsencrypt/live/votre-domaine.com/fullchain.pem ssl-certs/cert.pem
+sudo chown $USER:$USER ssl-certs/*.pem
+```
+
+### Étape 2 : Activer HTTPS
+
+#### Méthode 1 : Certificats détectés automatiquement
+
+Si les fichiers `ssl-certs/cert.pem` et `ssl-certs/key.pem` existent, HTTPS est activé automatiquement :
+
+```bash
+npm start
+```
+
+**Résultat** :
+- ✅ Serveur HTTP sur port 3001
+- ✅ Serveur HTTPS sur port 3443
+- ✅ Les deux fonctionnent en parallèle (pas de redirection)
+
+#### Méthode 2 : Forcer HTTPS avec variable d'environnement
+
+```bash
+# Activer HTTPS explicitement
+USE_HTTPS=true npm start
+
+# Avec redirection HTTP → HTTPS
+USE_HTTPS=true REDIRECT_TO_HTTPS=true npm start
+```
+
+### Étape 3 : Accéder à l'application HTTPS
+
+**En local** :
+- HTTPS : `https://localhost:3443`
+- HTTP : `http://localhost:3001` (redirigé si `REDIRECT_TO_HTTPS=true`)
+
+**Sur serveur Digital Ocean** :
+- HTTPS : `https://64.225.5.75:3443`
+- HTTP : `http://64.225.5.75:3001` (redirigé si `REDIRECT_TO_HTTPS=true`)
+
+### ⚠️ Gestion de l'avertissement de sécurité (certificats auto-signés)
+
+Lors de l'accès à HTTPS avec un certificat auto-signé :
+
+**Chrome/Edge** :
+1. Cliquez sur "Avancé"
+2. Cliquez sur "Continuer vers le site (non sécurisé)"
+
+**Firefox** :
+1. Cliquez sur "Avancé"
+2. Cliquez sur "Accepter le risque et continuer"
+
+**cURL** (pour les tests) :
+```bash
+# Ignorer la vérification SSL (développement uniquement)
+curl -k https://localhost:3443/api/health
+```
+
+---
+
+## 🧪 Tests et Vérification
+
+### Test 1 : Santé de l'application
+
+```bash
+# HTTP
+curl http://localhost:3001/api/health
+
+# HTTPS (avec certificat auto-signé)
+curl -k https://localhost:3443/api/health
+```
+
+**Réponse attendue** :
+```json
+{
+  "status": "OK",
+  "pays": "SEN",
+  "port": "Port de Dakar",
+  "kitMuleSoft": {
+    "accessible": true,
+    "latence": 123
+  }
+}
+```
+
+### Test 2 : Statistiques
+
+```bash
+curl http://localhost:3001/api/statistiques
+```
+
+### Test 3 : Création d'un manifeste (workflow complet)
+
+```bash
+curl -X POST http://localhost:3001/api/manifeste/creer \
+  -H "Content-Type: application/json" \
+  -d '{
+    "annee_manif": "2025",
+    "bureau_manif": "18N",
+    "numero_manif": 5016,
+    "consignataire": "MAERSK LINE",
+    "navire": "MARCO POLO",
+    "date_arrivee": "2025-01-15",
+    "articles": [{
+      "art": 1,
+      "pays_dest": "MALI",
+      "ville_dest": "BAMAKO",
+      "marchandise": "Véhicule Toyota",
+      "poids": 1500,
+      "destinataire": "IMPORT SARL"
+    }]
+  }'
+```
+
+### Test 4 : Interface Web
+
+1. Ouvrir un navigateur
+2. Accéder à `http://localhost:3001` (ou `https://localhost:3443`)
+3. Se connecter avec :
+   - **Username** : `douane`
+   - **Password** : `douane2025`
+4. Tester les workflows depuis l'interface
+
+---
+
+## 📋 Commandes Disponibles
+
+| Commande | Description |
+|----------|-------------|
+| `npm start` | Démarrer le serveur (HTTP + HTTPS si certificats présents) |
+| `npm run dev` | Alias de `npm start` |
+| `npm run local` | Alias de `npm start` |
+
+### Variables d'environnement utiles
+
+```bash
+# HTTP uniquement (désactiver HTTPS même si certificats présents)
+USE_HTTPS=false npm start
+
+# HTTPS avec redirection automatique HTTP → HTTPS
+USE_HTTPS=true REDIRECT_TO_HTTPS=true npm start
+
+# Changer les ports
+HTTP_PORT=8080 HTTPS_PORT=8443 npm start
+```
+
+---
+
+## 🏗️ Architecture de l'Application
+
+### Structure des dossiers
+
+```
+pays-a-simulator/
+├── api/                    # Endpoints API REST
+│   ├── auth/              # Authentification
+│   ├── manifeste/         # Workflow Libre Pratique
+│   ├── transit/          # Workflow Transit
+│   ├── apurement/        # Apurement et main levée
+│   └── health.js         # Santé système
+├── lib/                   # Bibliothèques
+│   ├── database.js       # Base de données in-memory
+│   └── kit-client.js     # Client Kit MuleSoft
+├── public/                # Interface web (HTML/CSS/JS)
+├── ssl-certs/             # Certificats SSL
+│   ├── cert.pem         # Certificat (à générer)
+│   ├── key.pem          # Clé privée (à générer)
+│   └── openssl.cnf      # Configuration OpenSSL
+├── server.js             # Serveur HTTP/HTTPS principal
+├── package.json          # Dépendances Node.js
+└── README.md            # Ce fichier
+```
+
+### Flux de données
+
+```
+Interface Web (public/)
+    ↓
+Serveur Node.js (server.js)
+    ↓
+APIs REST (api/)
+    ↓
+Base de données (lib/database.js)
+    ↓
+Client Kit MuleSoft (lib/kit-client.js)
+    ↓
+Kit d'Interconnexion MuleSoft (64.225.5.75:8086)
+    ↓
+Pays de destination (Mali, Burkina, etc.)
+```
+
+---
+
+## 🔍 Comprendre l'Application
+
+### Rôle dans l'écosystème UEMOA
+
+Cette application simule le **Système Douanier du Sénégal - Port de Dakar**, qui joue le rôle de **Pays de Prime Abord** dans l'espace UEMOA.
+
+**Fonctions principales** :
+1. **Réception des manifestes** : Enregistrement des marchandises arrivant au Port de Dakar
+2. **Transmission vers pays enclavés** : Envoi des extractions vers le Mali, Burkina Faso, Niger via le Kit MuleSoft
+3. **Réception des déclarations** : Retour d'information des pays de destination
+4. **Apurement et main levée** : Libération des marchandises après vérification des paiements
+
+### Workflows implémentés
+
+#### 1. Libre Pratique (21 étapes)
+- **Étapes 1-5** : Création manifeste → Transmission Kit → Pays destination
+- **Étape 17** : Réception informations déclaration/paiement
+- **Étapes 18-19** : Apurement → Bon à enlever
+
+#### 2. Transit (16 étapes)
+- **Étapes 1-11** : Création transit → Transmission Kit
+- **Étape 14** : Message arrivée destination
+- **Étapes 15-16** : Apurement transit → Libération garanties
+
+### Technologies utilisées
+
+- **Backend** : Node.js 22.x avec serveur HTTP/HTTPS natif
+- **Frontend** : HTML5, CSS3, JavaScript vanilla
+- **Données** : Stockage in-memory (Map, Set) - pas de base de données externe
+- **Interconnexion** : Axios pour communication avec Kit MuleSoft
+- **Sécurité** : HTTPS avec certificats SSL, authentification par session
 
 ---
 
@@ -479,11 +880,27 @@ PAYS_ROLE=PAYS_PRIME_ABORD
 
 ### Interface Web
 
+Accéder à l'interface via HTTP ou HTTPS :
+
 | URL | Description |
 |-----|-------------|
-| `/login.html` | Authentification |
-| `/libre-pratique.html` | Dashboard Libre Pratique |
-| `/transit.html` | Dashboard Transit |
+| `http://localhost:3001/login.html` | Authentification (HTTP) |
+| `https://localhost:3443/login.html` | Authentification (HTTPS) |
+| `http://localhost:3001/libre-pratique.html` | Dashboard Libre Pratique (HTTP) |
+| `https://localhost:3443/libre-pratique.html` | Dashboard Libre Pratique (HTTPS) |
+| `http://localhost:3001/transit.html` | Dashboard Transit (HTTP) |
+| `https://localhost:3443/transit.html` | Dashboard Transit (HTTPS) |
+
+**Sur serveur Digital Ocean** : Remplacer `localhost` par `64.225.5.75`
+
+### Comptes de test
+
+| Username | Password | Accès |
+|----------|----------|-------|
+| `admin` | `admin123` | Tous workflows |
+| `douane` | `douane2025` | Tous workflows |
+| `lp_user` | `lp123` | Libre pratique uniquement |
+| `transit_user` | `transit123` | Transit uniquement |
 
 ### Workflow Libre Pratique complet
 
@@ -604,11 +1021,60 @@ curl -X POST http://localhost:3001/api/transit/apurer \
 
 ## 🔧 Dépannage
 
+### Problèmes courants
+
 | Problème | Solution |
 |----------|----------|
-| Kit MuleSoft inaccessible | Vérifier `http://64.225.5.75:8086/api/v1/health` |
-| Port 3001 occupé | Modifier `PORT` dans `.env` |
-| Erreur manifeste | Vérifier format UEMOA (voir exemples) |
+| **Kit MuleSoft inaccessible** | Vérifier `http://64.225.5.75:8086/api/v1/health` depuis le serveur |
+| **Port 3001 occupé** | Modifier `HTTP_PORT` dans `.env` ou utiliser `HTTP_PORT=8080 npm start` |
+| **Port 3443 occupé** | Modifier `HTTPS_PORT` dans `.env` ou utiliser `HTTPS_PORT=8443 npm start` |
+| **Erreur manifeste** | Vérifier format UEMOA (voir exemples dans section Utilisation) |
+| **HTTPS ne démarre pas** | Vérifier que `ssl-certs/cert.pem` et `ssl-certs/key.pem` existent |
+| **Erreur "cert.pem not found"** | Générer les certificats SSL (voir section HTTPS) |
+| **Avertissement sécurité navigateur** | Normal avec certificats auto-signés - accepter l'avertissement |
+| **Redirection HTTP → HTTPS ne fonctionne pas** | Vérifier `REDIRECT_TO_HTTPS=true` dans `.env` ou en ligne de commande |
+| **Module non trouvé** | Exécuter `npm install` pour installer les dépendances |
+| **Node.js version incorrecte** | Utiliser Node.js 22.x : `nvm use 22` ou installer depuis nodejs.org |
+
+### Vérifications de base
+
+```bash
+# 1. Vérifier Node.js
+node --version  # Doit être 22.x
+
+# 2. Vérifier npm
+npm --version
+
+# 3. Vérifier les dépendances installées
+ls node_modules/
+
+# 4. Vérifier les certificats SSL (si HTTPS)
+ls -la ssl-certs/cert.pem ssl-certs/key.pem
+
+# 5. Vérifier les ports disponibles
+netstat -tuln | grep -E '3001|3443'
+
+# 6. Tester la connectivité Kit MuleSoft
+curl http://64.225.5.75:8086/api/v1/health
+```
+
+### Logs et débogage
+
+Les logs de l'application affichent :
+- ✅ Requêtes HTTP/HTTPS entrantes
+- ✅ Interactions avec le Kit MuleSoft
+- ✅ Erreurs et exceptions
+- ✅ Statut des workflows
+
+Pour plus de détails, consulter la console du serveur où `npm start` a été exécuté.
+
+### Support technique
+
+Si le problème persiste :
+1. Vérifier les logs du serveur
+2. Vérifier la connectivité réseau vers `64.225.5.75:8086`
+3. Vérifier les permissions sur les fichiers (notamment `ssl-certs/`)
+4. Consulter la section "Documentation Complémentaire" ci-dessous
 
 ---
 

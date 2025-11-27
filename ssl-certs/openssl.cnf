@@ -1,0 +1,22 @@
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+distinguished_name = dn
+x509_extensions = v3_req
+
+[dn]
+C = SN
+ST = Dakar
+L = Dakar
+O = Douanes Senegal
+OU = Port de Dakar
+CN = 64.225.5.75
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+IP.1 = 64.225.5.75
+IP.2 = 127.0.0.1
+DNS.1 = localhost

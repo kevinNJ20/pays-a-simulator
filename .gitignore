@@ -67,6 +67,12 @@ jspm_packages/
 ehthumbs.db
 Thumbs.db
 
+# SSL Certificates (ne pas commiter les clés privées)
+ssl-certs/*.pem
+ssl-certs/*.key
+ssl-certs/*.crt
+!ssl-certs/openssl.cnf
+
 # ============================================================================
 # IMPORTANT: NE PAS IGNORER CES FICHIERS ESSENTIELS POUR LE SIMULATEUR SÉNÉGAL
 # ============================================================================
